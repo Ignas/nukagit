@@ -27,6 +27,8 @@ dependencies {
     implementation 'io.prometheus:simpleclient_common:_'
     implementation 'io.prometheus:simpleclient_hotspot:_'
     implementation 'io.prometheus:simpleclient_httpserver:_'
+
+    implementation 'io.opencensus:opencensus-api:_'
     implementation 'io.opencensus:opencensus-impl:_'
     implementation 'io.opencensus:opencensus-contrib-grpc-metrics:_'
     implementation 'io.opencensus:opencensus-exporter-stats-prometheus:_'
@@ -36,6 +38,7 @@ dependencies {
     implementation 'io.grpc:grpc-protobuf:_'
     implementation 'io.grpc:grpc-netty:_'
     implementation 'io.grpc:grpc-services:_'
+    implementation 'io.grpc:grpc-census:_'
     compileOnly 'javax.annotation:javax.annotation-api:_'
 
     implementation 'org.slf4j:slf4j-api:_'
