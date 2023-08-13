@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "lt/pow/nukagit/grpc/types.proto";
+import "types.proto";
 
 package lt.pow.nukagit.grpc;
 
