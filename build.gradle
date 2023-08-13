@@ -1,15 +1,22 @@
 plugins {
+    id 'application'
     id 'java'
 }
 
 group = 'lt.pow.nukagit'
 version = '1.0-SNAPSHOT'
+mainClassName = 'lt.pow.nukagit.Main'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    implementation 'org.eclipse.jgit:org.eclipse.jgit.archive:6.6.0.202305301015-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r'
+    implementation 'org.apache.sshd:sshd-core:2.10.0'
+    implementation 'org.apache.sshd:sshd-git:2.10.0'
+
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:6.6.0.202305301015-r'
