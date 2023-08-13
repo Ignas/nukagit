@@ -14,7 +14,7 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ./data/mysql/data:/var/lib/mysql/data:rw
+      - ./data/mysql/:/var/lib/mysql/data:rw
 
   minio:
     image: quay.io/minio/minio:latest
