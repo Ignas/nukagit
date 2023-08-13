@@ -1,0 +1,20 @@
+plugins {
+    id 'java'
+}
+
+group = 'lt.pow.nukagit'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:6.6.0.202305301015-r'
+}
+
+test {
+    useJUnitPlatform()
+}
