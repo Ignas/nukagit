@@ -27,6 +27,9 @@ dependencies {
     implementation 'io.prometheus:simpleclient_common:_'
     implementation 'io.prometheus:simpleclient_hotspot:_'
     implementation 'io.prometheus:simpleclient_httpserver:_'
+    implementation 'io.opencensus:opencensus-impl:_'
+    implementation 'io.opencensus:opencensus-contrib-grpc-metrics:_'
+    implementation 'io.opencensus:opencensus-exporter-stats-prometheus:_'
 
     implementation 'com.google.protobuf:protobuf-java:_'
     implementation 'io.grpc:grpc-stub:_'

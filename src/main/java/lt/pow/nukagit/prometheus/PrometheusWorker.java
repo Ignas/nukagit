@@ -1,5 +1,7 @@
 package lt.pow.nukagit.prometheus;
 
+import io.opencensus.contrib.grpc.metrics.RpcViews;
+import io.opencensus.exporter.stats.prometheus.PrometheusStatsCollector;
 import io.prometheus.client.exporter.HTTPServer;
 import io.prometheus.client.hotspot.DefaultExports;
 
@@ -21,6 +23,9 @@ public class PrometheusWorker implements AutoCloseable {
 
   public void start() {
     DefaultExports.initialize();
+    RpcViews.registerServerGrpcViews();
+    PrometheusStatsCollector.createAndRegister();
+
     try {
       server = builder.build();
     } catch (IOException e) {
