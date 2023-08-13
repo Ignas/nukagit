@@ -72,6 +72,9 @@ dependencies {
     testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:_'
     testImplementation 'com.google.truth:truth:_'
 
+    // Command line parsing
+    implementation 'info.picocli:picocli:_'
+
     // Spock
     testImplementation platform('org.apache.groovy:groovy-bom:_')
     testImplementation platform("org.spockframework:spock-bom:_")
