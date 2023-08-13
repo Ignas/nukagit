@@ -11,6 +11,7 @@ import lt.pow.nukagit.dfs.DfsModule;
 import lt.pow.nukagit.grpc.GrpcModule;
 import lt.pow.nukagit.lib.cli.CliCommand;
 import lt.pow.nukagit.prometheus.PrometheusModule;
+import lt.pow.nukagit.minio.MinioModule;
 import lt.pow.nukagit.ssh.SshModule;
 
 import java.util.Set;
@@ -24,7 +25,8 @@ import java.util.Set;
       ConfigModule.class,
       DatabaseModule.class,
       ServerModule.class,
-      MigrateModule.class
+      MigrateModule.class,
+      MinioModule.class
     })
 @Singleton
 public interface MainComponent {

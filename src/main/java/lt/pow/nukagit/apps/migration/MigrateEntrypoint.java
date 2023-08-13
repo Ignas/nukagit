@@ -1,11 +1,9 @@
 package lt.pow.nukagit.apps.migration;
 
 import dagger.Lazy;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-
 import lt.pow.nukagit.lib.cli.CliCommand;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;

@@ -29,3 +29,11 @@ services:
     volumes:
       - ./data/minio:/data:rw
     command: server /data --console-address ":9001"
+  mc:
+    image: minio/mc:latest
+    container_name: mc
+    restart: "no"
+    depends_on:
+      - minio
+    entrypoint: /bin/sh
+    command: -c "mc alias set minio http://minio:9000 minio99 minio123 && mc mb minio/nukagit"

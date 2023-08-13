@@ -60,6 +60,9 @@ dependencies {
     implementation 'org.flywaydb:flyway-core:_'
     implementation 'org.flywaydb:flyway-mysql:_'
 
+    // Minio
+    implementation 'io.minio:minio:_'
+
     // Utilities
     implementation 'com.google.guava:guava:_'
 
