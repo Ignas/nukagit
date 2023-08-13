@@ -1,0 +1,38 @@
+version: "3.5"
+
+services:
+  mysql:
+    image: centos/mysql-80-centos8:latest
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_LOWER_CASE_TABLE_NAMES: 1
+    ports:
+      - 3306:3306
+    volumes:
+      - ./data/mysql/data:/var/lib/mysql/data:rw
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: minio99
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./data/minio:/data:rw
+    command: server /data --console-address ":9001"
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    restart: always
+    ports:
+      - 9411:9411

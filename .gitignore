@@ -7,6 +7,9 @@ build/
 ### Generated code ###
 src/generated/
 
+### Databases ###
+data/
+
 ### SSH keys generated for development ###
 keys/ssh_host_key.pem
 
