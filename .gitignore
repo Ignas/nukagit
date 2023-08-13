@@ -21,6 +21,7 @@ keys/ssh_host_key.pem
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+src/test/lib
 
 ### Eclipse ###
 .apt_generated

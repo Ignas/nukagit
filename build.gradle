@@ -1,9 +1,9 @@
 plugins {
     id 'application'
     id 'java'
+    id 'groovy'
     id 'com.github.spotbugs'
     id 'idea'
-
 }
 
 group = 'lt.pow.nukagit'
@@ -17,42 +17,58 @@ repositories {
 dependencies {
     implementation project(':proto')
 
+    // Jgit and SSHD
     implementation 'org.eclipse.jgit:org.eclipse.jgit.archive:_'
     implementation 'org.eclipse.jgit:org.eclipse.jgit:_'
     implementation 'org.apache.sshd:sshd-core:_'
     implementation 'org.apache.sshd:sshd-git:_'
-    implementation 'com.google.dagger:dagger:_'
 
+    // Dagger
+    implementation 'com.google.dagger:dagger:_'
+    annotationProcessor 'com.google.dagger:dagger-compiler:_'
+    implementation 'javax.annotation:javax.annotation-api:_'
+
+    // Metrics
     implementation 'io.prometheus:simpleclient:_'
     implementation 'io.prometheus:simpleclient_common:_'
     implementation 'io.prometheus:simpleclient_hotspot:_'
     implementation 'io.prometheus:simpleclient_httpserver:_'
-
     implementation 'io.opencensus:opencensus-api:_'
     implementation 'io.opencensus:opencensus-impl:_'
     implementation 'io.opencensus:opencensus-contrib-grpc-metrics:_'
     implementation 'io.opencensus:opencensus-exporter-stats-prometheus:_'
 
+    // Grpc
     implementation 'com.google.protobuf:protobuf-java:_'
     implementation 'io.grpc:grpc-stub:_'
     implementation 'io.grpc:grpc-protobuf:_'
     implementation 'io.grpc:grpc-netty:_'
     implementation 'io.grpc:grpc-services:_'
     implementation 'io.grpc:grpc-census:_'
-    compileOnly 'javax.annotation:javax.annotation-api:_'
 
+    // Logging
     implementation 'org.slf4j:slf4j-api:_'
     implementation 'ch.qos.logback:logback-classic:_'
     implementation 'ch.qos.logback:logback-core:_'
 
+    // Utilities
     implementation 'com.google.guava:guava:_'
 
+    // Testing
     testImplementation platform('org.junit:junit-bom:_')
     testImplementation 'org.junit.jupiter:junit-jupiter:_'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:_'
     testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:_'
     testImplementation 'com.google.truth:truth:_'
-    annotationProcessor 'com.google.dagger:dagger-compiler:_'
+
+    // Spock
+    testImplementation platform('org.apache.groovy:groovy-bom:_')
+    testImplementation platform("org.spockframework:spock-bom:_")
+    testImplementation 'org.apache.groovy:groovy:_'
+    testImplementation "org.spockframework:spock-core:_"
+    testImplementation "org.hamcrest:hamcrest-core:_"
+    testRuntimeOnly 'net.bytebuddy:byte-buddy:_'
+    testRuntimeOnly "org.objenesis:objenesis:_"
 }
 
 java {
@@ -62,4 +78,7 @@ java {
 
 test {
     useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
