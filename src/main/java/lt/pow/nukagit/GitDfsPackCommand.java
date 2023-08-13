@@ -1,5 +1,6 @@
 package lt.pow.nukagit;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.git.pack.GitPackCommand;
 import org.eclipse.jgit.transport.ReceivePack;
@@ -22,18 +23,7 @@ public class GitDfsPackCommand extends GitPackCommand {
   public void run() {
     String command = getCommand();
     try {
-      List<String> strs = parseDelimitedString(command, " ", true);
-      String[] args = strs.toArray(new String[strs.size()]);
-      for (int i = 0; i < args.length; i++) {
-        String argVal = args[i];
-        if (argVal.startsWith("'") && argVal.endsWith("'")) {
-          args[i] = argVal.substring(1, argVal.length() - 1);
-          argVal = args[i];
-        }
-        if (argVal.startsWith("\"") && argVal.endsWith("\"")) {
-          args[i] = argVal.substring(1, argVal.length() - 1);
-        }
-      }
+      String[] args = parseQuotedRepositoryName(command);
 
       if (args.length != 2) {
         throw new IllegalArgumentException("Invalid git command line (no arguments): " + command);
@@ -53,5 +43,22 @@ public class GitDfsPackCommand extends GitPackCommand {
     } catch (Throwable t) {
       onExit(-1, t.getClass().getSimpleName());
     }
+  }
+
+  @VisibleForTesting
+  public static String[] parseQuotedRepositoryName(String command) {
+    List<String> strs = parseDelimitedString(command, " ", true);
+    String[] args = strs.toArray(new String[strs.size()]);
+    for (int i = 0; i < args.length; i++) {
+      String argVal = args[i];
+      if (argVal.startsWith("'") && argVal.endsWith("'")) {
+        args[i] = argVal.substring(1, argVal.length() - 1);
+        argVal = args[i];
+      }
+      if (argVal.startsWith("\"") && argVal.endsWith("\"")) {
+        args[i] = argVal.substring(1, argVal.length() - 1);
+      }
+    }
+    return args;
   }
 }
