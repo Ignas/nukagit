@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package lt.pow.nukagit.grpc;
+
+message Repository {
+  string name = 1;
+}

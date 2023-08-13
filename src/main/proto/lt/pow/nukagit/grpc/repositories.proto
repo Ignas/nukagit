@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "lt/pow/nukagit/grpc/types.proto";
+
+package lt.pow.nukagit.grpc;
+
+service RepositoriesService {
+  rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
+  }
+}
+
+// The request message containing the user's name.
+message ListRepositoriesRequest {
+}
+
+// The response message containing the greetings
+message ListRepositoriesResponse {
+  repeated Repository repositories = 1;
+}
