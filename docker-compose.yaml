@@ -29,10 +29,3 @@ services:
     volumes:
       - ./data/minio:/data:rw
     command: server /data --console-address ":9001"
-
-  zipkin:
-    image: openzipkin/zipkin:latest
-    container_name: zipkin
-    restart: always
-    ports:
-      - 9411:9411
