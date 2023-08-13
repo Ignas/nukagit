@@ -13,7 +13,7 @@ import java.nio.file.Path;
 @Module
 public class SshModule {
   @Provides
-  SshServer createServer() {
+  SshServer createServer(DfsRepositoryResolver dfsRepositoryResolver) {
     var sshServer = SshServer.setUpDefaultServer();
     sshServer.setHost("127.0.0.1");
     sshServer.setPort(2222);
@@ -21,8 +21,8 @@ public class SshModule {
     keyPairGenerator.setAlgorithm("RSA");
     sshServer.setKeyPairProvider(keyPairGenerator);
     sshServer.setPasswordAuthenticator(AcceptAllPasswordAuthenticator.INSTANCE);
-    DfsRepositoryResolver dfsRepositoryResolver = new DfsRepositoryResolver();
-    sshServer.setCommandFactory(new GitDfsPackCommandFactory().withDfsRepositoryResolver(dfsRepositoryResolver));
+    sshServer.setCommandFactory(
+        new GitDfsPackCommandFactory().withDfsRepositoryResolver(dfsRepositoryResolver));
     return sshServer;
   }
 }
