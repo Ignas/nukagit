@@ -8,6 +8,7 @@ import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GitDfsPackCommand extends GitPackCommand {
@@ -23,7 +24,7 @@ public class GitDfsPackCommand extends GitPackCommand {
   public void run() {
     String command = getCommand();
     try {
-      String[] args = parseQuotedRepositoryName(command);
+      var args = extractQuotedStrings(command);
 
       if (args.length != 2) {
         throw new IllegalArgumentException("Invalid git command line (no arguments): " + command);
@@ -46,19 +47,46 @@ public class GitDfsPackCommand extends GitPackCommand {
   }
 
   @VisibleForTesting
-  public static String[] parseQuotedRepositoryName(String command) {
-    List<String> strs = parseDelimitedString(command, " ", true);
-    String[] args = strs.toArray(new String[strs.size()]);
-    for (int i = 0; i < args.length; i++) {
-      String argVal = args[i];
-      if (argVal.startsWith("'") && argVal.endsWith("'")) {
-        args[i] = argVal.substring(1, argVal.length() - 1);
-        argVal = args[i];
-      }
-      if (argVal.startsWith("\"") && argVal.endsWith("\"")) {
-        args[i] = argVal.substring(1, argVal.length() - 1);
+  public static String[] extractQuotedStrings(String input) {
+    List<String> splitStrings = new ArrayList<>();
+
+    StringBuilder currentString = new StringBuilder();
+    boolean insideQuotes = false;
+    boolean escaped = false;
+
+    for (char c : input.toCharArray()) {
+      if (!insideQuotes) {
+        if (escaped) {
+          currentString.append(c);
+          escaped = false;
+        }  else if (c == '\\') {
+          escaped = true;
+        } else if (c == '\'') {
+          insideQuotes = true;
+        } else if (!Character.isWhitespace(c)) {
+          currentString.append(c);
+        } else if (currentString.length() > 0) {
+          splitStrings.add(currentString.toString());
+          currentString.setLength(0);
+        }
+      } else {
+        if (escaped) {
+          currentString.append(c);
+          escaped = false;
+        } else if (c == '\\') {
+          escaped = true;
+        } else if (c == '\'') {
+          insideQuotes = false;
+        } else {
+          currentString.append(c);
+        }
       }
     }
-    return args;
+
+    if (currentString.length() > 0) {
+      splitStrings.add(currentString.toString());
+    }
+
+    return splitStrings.toArray(new String[0]);
   }
 }

@@ -1,26 +1,30 @@
 package lt.pow.nukagit;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
 class GitDfsPackCommandTest {
 
-  @Test
-  void parseQuotedRepositoryName() {
-    assertThat(List.of(GitDfsPackCommand.parseQuotedRepositoryName("git-upload-pack '/home/git/repositories/test.git'")))
-        .containsExactly("git-upload-pack", "/home/git/repositories/test.git");
-    // This seems to be wrong, but I have not been able to confirm it.
-    assertThat(List.of(GitDfsPackCommand.parseQuotedRepositoryName("git-upload-pack '/home/git/r'\\''epositories/test.git'")))
-        .containsExactly("git-upload-pack", "/home/git/r'''epositories/test.git");
-    // I think git would strip the inner quotes too
-    assertThat(List.of(GitDfsPackCommand.parseQuotedRepositoryName("git-upload-pack '/home/git/''repositories/test.git'")))
-        .containsExactly("git-upload-pack", "/home/git/''repositories/test.git");
-    assertThat(List.of(GitDfsPackCommand.parseQuotedRepositoryName("git-upload-pack '/home/git/re\"positories/test.git'")))
-        .containsExactly("git-upload-pack", "/home/git/re\"positories/test.git");
+  private static Stream<Arguments> quotedCommandProvider() {
+    return Stream.of(
+        Arguments.of(
+            "git-upload-pack '/home/git/repositories/test.git'",
+            List.of("git-upload-pack", "/home/git/repositories/test.git")),
+        Arguments.of("'test.git'", List.of("test.git")),
+        Arguments.of("'tes''t.git'", List.of("test.git")),
+        Arguments.of("'tes'\\''t.git'", List.of("tes't.git")),
+        Arguments.of("'te s''t.gi t'", List.of("te st.gi t")));
+  }
+
+  @ParameterizedTest
+  @MethodSource("quotedCommandProvider")
+  void extractQuotedStrings(String input, List<String> expected) {
+    assertThat(List.of(GitDfsPackCommand.extractQuotedStrings(input))).containsExactlyElementsIn(expected);
   }
 }
