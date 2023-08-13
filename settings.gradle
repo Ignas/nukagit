@@ -3,3 +3,9 @@ plugins {
 }
 
 rootProject.name = 'nukagit'
+
+refreshVersions {
+    rejectVersionIf {
+        candidate.stabilityLevel.isLessStableThan(current.stabilityLevel)
+    }
+}
