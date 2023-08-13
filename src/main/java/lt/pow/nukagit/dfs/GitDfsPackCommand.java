@@ -1,4 +1,4 @@
-package lt.pow.nukagit;
+package lt.pow.nukagit.dfs;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.sshd.common.util.threads.CloseableExecutorService;

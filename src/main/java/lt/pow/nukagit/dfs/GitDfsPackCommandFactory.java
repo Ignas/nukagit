@@ -1,4 +1,4 @@
-package lt.pow.nukagit;
+package lt.pow.nukagit.dfs;
 
 import org.apache.sshd.git.pack.GitPackCommand;
 import org.apache.sshd.git.pack.GitPackCommandFactory;

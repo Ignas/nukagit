@@ -1,10 +1,11 @@
 package lt.pow.nukagit;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.stream.Stream;
+
+import lt.pow.nukagit.dfs.GitDfsPackCommand;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;

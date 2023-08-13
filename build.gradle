@@ -21,11 +21,19 @@ dependencies {
     implementation 'org.eclipse.jgit:org.eclipse.jgit:_'
     implementation 'org.apache.sshd:sshd-core:_'
     implementation 'org.apache.sshd:sshd-git:_'
+    implementation 'com.google.dagger:dagger:_'
 
-//    implementation 'com.google.protobuf:protobuf-java:_'
-//    implementation 'io.grpc:grpc-stub:_'
-//    implementation 'io.grpc:grpc-protobuf:_'
-//    implementation 'javax.annotation:javax.annotation-api:1.3.1'
+    implementation 'io.prometheus:simpleclient:_'
+    implementation 'io.prometheus:simpleclient_common:_'
+    implementation 'io.prometheus:simpleclient_hotspot:_'
+    implementation 'io.prometheus:simpleclient_httpserver:_'
+
+    implementation 'com.google.protobuf:protobuf-java:_'
+    implementation 'io.grpc:grpc-stub:_'
+    implementation 'io.grpc:grpc-protobuf:_'
+    implementation 'io.grpc:grpc-netty:_'
+    implementation 'io.grpc:grpc-services:_'
+    compileOnly 'javax.annotation:javax.annotation-api:_'
 
     implementation 'org.slf4j:slf4j-api:_'
     implementation 'ch.qos.logback:logback-classic:_'
@@ -38,6 +46,12 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-params:_'
     testImplementation 'org.eclipse.jgit:org.eclipse.jgit.junit:_'
     testImplementation 'com.google.truth:truth:_'
+    annotationProcessor 'com.google.dagger:dagger-compiler:_'
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
 }
 
 test {

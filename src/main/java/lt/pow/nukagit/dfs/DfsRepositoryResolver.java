@@ -1,4 +1,4 @@
-package lt.pow.nukagit;
+package lt.pow.nukagit.dfs;
 
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
