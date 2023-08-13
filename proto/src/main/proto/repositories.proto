@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "types.proto";
 
-package lt.pow.nukagit.grpc;
+package lt.pow.nukagit.proto;
 
 service RepositoriesService {
   rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
