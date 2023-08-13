@@ -11,6 +11,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 @Module
 public class DatabaseModule {
@@ -25,7 +26,7 @@ public class DatabaseModule {
 
   @Provides
   @Singleton
-  HikariDataSource dataSource(DatabaseConfiguration configuration) {
+  DataSource dataSource(DatabaseConfiguration configuration) {
     HikariConfig hikariConfig = new HikariConfig();
     hikariConfig.setJdbcUrl(configuration.jdbcUrl());
     hikariConfig.setUsername(configuration.username());
@@ -35,7 +36,7 @@ public class DatabaseModule {
 
   @Provides
   @Singleton
-  Jdbi jdbi(HikariDataSource dataSource) {
+  Jdbi jdbi(DataSource dataSource) {
     return Jdbi.create(dataSource).installPlugin(new SqlObjectPlugin());
   }
 

@@ -57,6 +57,8 @@ dependencies {
     implementation 'org.jdbi:jdbi3-core:_'
     implementation 'org.jdbi:jdbi3-sqlobject:_'
     implementation 'mysql:mysql-connector-java:_'
+    implementation 'org.flywaydb:flyway-core:_'
+    implementation 'org.flywaydb:flyway-mysql:_'
 
     // Utilities
     implementation 'com.google.guava:guava:_'

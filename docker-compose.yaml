@@ -7,8 +7,8 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db
-      MYSQL_USER: user
+      MYSQL_DATABASE: nukagit
+      MYSQL_USER: nukagit
       MYSQL_PASSWORD: password
       MYSQL_LOWER_CASE_TABLE_NAMES: 1
     ports:
