@@ -54,6 +54,10 @@ dependencies {
     // Utilities
     implementation 'com.google.guava:guava:_'
 
+    // Config
+    implementation 'com.github.gestalt-config:gestalt-core:_'
+    implementation 'com.github.gestalt-config:gestalt-yaml:_'
+
     // Testing
     testImplementation platform('org.junit:junit-bom:_')
     testImplementation 'org.junit.jupiter:junit-jupiter:_'
