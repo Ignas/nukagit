@@ -1,11 +1,7 @@
 package lt.pow.nukagit;
 
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
-import org.apache.sshd.git.AbstractGitCommand;
 import org.apache.sshd.git.pack.GitPackCommand;
-import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
-import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
@@ -15,8 +11,11 @@ import java.util.List;
 
 public class GitDfsPackCommand extends GitPackCommand {
 
-  public GitDfsPackCommand(String command, CloseableExecutorService executorService) {
+  private final DfsRepositoryResolver dfsRepositoryResolver;
+
+  public GitDfsPackCommand(String command, CloseableExecutorService executorService, DfsRepositoryResolver dfsRepositoryResolver) {
     super((cmd, args, session, fs) -> Path.of("/"), command, executorService);
+    this.dfsRepositoryResolver = dfsRepositoryResolver;
   }
 
   @Override
@@ -40,7 +39,7 @@ public class GitDfsPackCommand extends GitPackCommand {
         throw new IllegalArgumentException("Invalid git command line (no arguments): " + command);
       }
 
-      var db = resolveDfsRepository(args);
+      var db = dfsRepositoryResolver.resolveDfsRepository(getServerSession().getUsername(), args);
       String subCommand = args[0];
       if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
         new UploadPack(db).upload(getInputStream(), getOutputStream(), getErrorStream());
@@ -54,10 +53,5 @@ public class GitDfsPackCommand extends GitPackCommand {
     } catch (Throwable t) {
       onExit(-1, t.getClass().getSimpleName());
     }
-  }
-
-  private Repository resolveDfsRepository(String[] args) {
-    // getServerSession() to get the username
-    return new InMemoryRepository(new DfsRepositoryDescription(args[1]));
   }
 }

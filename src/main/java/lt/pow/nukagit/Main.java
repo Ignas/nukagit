@@ -18,7 +18,9 @@ public class Main {
     keyPairGenerator.setAlgorithm("RSA");
     sshServer.setKeyPairProvider(keyPairGenerator);
     sshServer.setPasswordAuthenticator(AcceptAllPasswordAuthenticator.INSTANCE);
-    sshServer.setCommandFactory(new GitDfsPackCommandFactory());
+
+    DfsRepositoryResolver dfsRepositoryResolver = new DfsRepositoryResolver();
+    sshServer.setCommandFactory(new GitDfsPackCommandFactory().withDfsRepositoryResolver(dfsRepositoryResolver));
     sshServer.start();
 
     // Sleep for maxint seconds
