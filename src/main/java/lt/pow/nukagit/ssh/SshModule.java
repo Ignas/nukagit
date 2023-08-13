@@ -1,9 +1,13 @@
 package lt.pow.nukagit.ssh;
 
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.multibindings.IntoSet;
 import lt.pow.nukagit.dfs.DfsRepositoryResolver;
 import lt.pow.nukagit.dfs.GitDfsPackCommandFactory;
+import lt.pow.nukagit.lib.lifecycle.Managed;
+import lt.pow.nukagit.prometheus.ManagedPrometheusServer;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.auth.password.AcceptAllPasswordAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
@@ -13,10 +17,10 @@ import org.github.gestalt.config.exceptions.GestaltException;
 import java.nio.file.Path;
 
 @Module
-public class SshModule {
+public abstract class SshModule {
 
   @Provides
-  SshServerConfig configuration(Gestalt configurationProvider) {
+  static SshServerConfig configuration(Gestalt configurationProvider) {
     try {
       return configurationProvider.getConfig("ssh", SshServerConfig.class);
     } catch (GestaltException e) {
@@ -24,8 +28,12 @@ public class SshModule {
     }
   }
 
+  @Binds
+  @IntoSet
+  abstract Managed bindServer(ManagedSshServer server);
+
   @Provides
-  SshServer createServer(
+  static SshServer createServer(
       DfsRepositoryResolver dfsRepositoryResolver, SshServerConfig sshServerConfig) {
     var sshServer = SshServer.setUpDefaultServer();
     sshServer.setHost(sshServerConfig.hostname());

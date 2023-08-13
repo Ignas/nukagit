@@ -1,6 +1,8 @@
 package lt.pow.nukagit;
 
+import com.google.common.io.Closer;
 import io.opencensus.stats.Measure;
+import lt.pow.nukagit.lib.lifecycle.Managed;
 import lt.pow.nukagit.lib.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +17,10 @@ public class Main {
 
     LOGGER.info("Starting up");
 
-    try (var sshServer = component.sshServer();
-        var prometheus = component.prometheusServer();
-        var grpcServer = component.grpcServer()) {
-      prometheus.start();
-      sshServer.start();
-      grpcServer.start();
+    try (Closer closer = Closer.create()) {
+      // Using Closer even though it is designed around streams, because it is the only helper
+      // library I found
+      component.servers().stream().map(closer::register).forEach(Managed::start);
       Metrics.count(startupCounter);
       Thread.currentThread().join();
     } catch (Exception e) {

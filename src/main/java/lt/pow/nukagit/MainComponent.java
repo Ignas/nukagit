@@ -1,16 +1,15 @@
 package lt.pow.nukagit;
 
 import dagger.Component;
+import java.util.List;
+import java.util.Set;
 import javax.inject.Singleton;
-
 import lt.pow.nukagit.config.ConfigModule;
 import lt.pow.nukagit.dfs.DfsModule;
 import lt.pow.nukagit.grpc.GrpcModule;
-import lt.pow.nukagit.grpc.GrpcWorker;
+import lt.pow.nukagit.lib.lifecycle.Managed;
 import lt.pow.nukagit.prometheus.PrometheusModule;
-import lt.pow.nukagit.prometheus.PrometheusWorker;
 import lt.pow.nukagit.ssh.SshModule;
-import org.apache.sshd.server.SshServer;
 
 @Component(
     modules = {
@@ -22,9 +21,5 @@ import org.apache.sshd.server.SshServer;
     })
 @Singleton
 public interface MainComponent {
-  SshServer sshServer();
-
-  PrometheusWorker prometheusServer();
-
-  GrpcWorker grpcServer();
+  Set<Managed> servers();
 }
