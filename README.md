@@ -1,4 +1,6 @@
-= Nukagit - making git distributed
+# Nukagit - making git distributed
+
+## What is this?
 Nukagit is my attempt at making a JGIT DFS based git server backed by a combination
 of minio and mysql. It is a work in progress and is not ready for production use.
 
@@ -9,12 +11,12 @@ always available for reading). The write overhead of having to write to multiple
 remote regions is not such a huge problem, as most people can survive an extra second
 of latency when pushing to a remote git repository.
 
-== Building
+## Building
 ```shell
 ./gradlew build
 ```
 
-== Running
+## Running
 ```shell
 docker-compose up
 # you will have to run it a couple times because mysql fails to chown
@@ -24,7 +26,7 @@ docker-compose up
 ./gradlew serve --args="serve"
 ```
 
-== Testing
+## Testing
 ```shell
 git clone "ssh://git@localhost:2222/test-repository"
 # Repository will be created automatically
