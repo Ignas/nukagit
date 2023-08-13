@@ -51,6 +51,13 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:_'
     implementation 'ch.qos.logback:logback-core:_'
 
+    // Database
+    implementation 'com.zaxxer:HikariCP:_'
+    implementation 'org.jdbi:jdbi:_'
+    implementation 'org.jdbi:jdbi3-core:_'
+    implementation 'org.jdbi:jdbi3-sqlobject:_'
+    implementation 'mysql:mysql-connector-java:_'
+
     // Utilities
     implementation 'com.google.guava:guava:_'
 
