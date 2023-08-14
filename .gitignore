@@ -10,6 +10,9 @@ src/generated/
 ### Databases ###
 data/
 
+### Test Data ###
+testdata/test*
+
 ### SSH keys generated for development ###
 keys/ssh_host_key.pem
 
