@@ -19,6 +19,10 @@
     <appender-ref ref="STDOUT"/>
   </logger>
 
+  <logger name="lt.pow.nukagit" level="DEBUG">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
   <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>

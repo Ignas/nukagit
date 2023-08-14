@@ -6,16 +6,21 @@ import org.apache.sshd.git.pack.GitPackCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GitDfsPackCommand extends GitPackCommand {
-
+  Logger LOGGER = LoggerFactory.getLogger(GitDfsPackCommand.class);
   private final DfsRepositoryResolver dfsRepositoryResolver;
 
-  public GitDfsPackCommand(String command, CloseableExecutorService executorService, DfsRepositoryResolver dfsRepositoryResolver) {
+  public GitDfsPackCommand(
+      String command,
+      CloseableExecutorService executorService,
+      DfsRepositoryResolver dfsRepositoryResolver) {
     super((cmd, args, session, fs) -> Path.of("/"), command, executorService);
     this.dfsRepositoryResolver = dfsRepositoryResolver;
   }
@@ -42,6 +47,7 @@ public class GitDfsPackCommand extends GitPackCommand {
 
       onExit(0);
     } catch (Throwable t) {
+      LOGGER.error("Error running git command: {}", command, t);
       onExit(-1, t.getClass().getSimpleName());
     }
   }
@@ -59,7 +65,7 @@ public class GitDfsPackCommand extends GitPackCommand {
         if (escaped) {
           currentString.append(c);
           escaped = false;
-        }  else if (c == '\\') {
+        } else if (c == '\\') {
           escaped = true;
         } else if (c == '\'') {
           insideQuotes = true;
