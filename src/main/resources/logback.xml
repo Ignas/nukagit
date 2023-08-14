@@ -11,7 +11,15 @@
     </encoder>
   </appender>
 
-  <root level="debug">
+  <logger name="com.zaxxer.hikari" level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
+  <logger name="org.apache.sshd" level="INFO">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
+  <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>
