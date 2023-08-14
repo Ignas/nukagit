@@ -4,6 +4,7 @@ plugins {
     id 'groovy'
     id 'com.github.spotbugs'
     id 'idea'
+    id 'com.ryandens.javaagent-application' version "0.4.2"
 }
 
 group = 'lt.pow.nukagit'
@@ -88,11 +89,21 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-core:_"
     testRuntimeOnly 'net.bytebuddy:byte-buddy:_'
     testRuntimeOnly "org.objenesis:objenesis:_"
+
+    javaagent("io.opentelemetry.javaagent:opentelemetry-javaagent:1.11.1")
 }
 
 java {
     sourceCompatibility = JavaVersion.toVersion("17")
     targetCompatibility = JavaVersion.toVersion("17")
+}
+
+run {
+    systemProperty "otel.metrics.exporter", "prometheus"
+    systemProperty "otel.exporter.prometheus.port", "9091"
+    systemProperty "otel.traces.exporter", "none"
+    systemProperty "otel.service.name", "nukagit"
+    // systemProperty "otel.javaagent.debug", "true"
 }
 
 test {
