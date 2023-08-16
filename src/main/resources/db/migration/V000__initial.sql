@@ -12,3 +12,11 @@ ALTER TABLE repositories
 
 ALTER TABLE repositories
     ADD CONSTRAINT UNIQUE (name, not_archived);
+
+CREATE TABLE packs (
+    repository_id INT NOT NULL,
+    name CHAR(36) NOT NULL,
+    source varchar(50) NOT NULL,
+    ext varchar(10) NOT NULL,
+    PRIMARY KEY (repository_id, name, source, ext)
+)

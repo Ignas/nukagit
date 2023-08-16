@@ -5,6 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import dagger.Module;
 import dagger.Provides;
 import lt.pow.nukagit.db.command.RepositoriesCommandDao;
+import lt.pow.nukagit.db.query.PackQueryDao;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
 import org.jdbi.v3.core.Jdbi;
@@ -44,5 +45,11 @@ public class DatabaseModule {
   @Singleton
   RepositoriesCommandDao repositoriesCommandDao(Jdbi jdbi) {
     return jdbi.onDemand(RepositoriesCommandDao.class);
+  }
+
+  @Provides
+  @Singleton
+  PackQueryDao packQueryDao(Jdbi jdbi) {
+    return jdbi.onDemand(PackQueryDao.class);
   }
 }

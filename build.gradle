@@ -65,6 +65,8 @@ dependencies {
 
     // Utilities
     implementation 'com.google.guava:guava:_'
+    implementation 'org.immutables:value:_'
+    annotationProcessor "org.immutables:value:_"
 
     // Config
     implementation 'com.github.gestalt-config:gestalt-core:_'
@@ -86,6 +88,8 @@ dependencies {
     testImplementation 'org.apache.groovy:groovy:_'
     testImplementation "org.spockframework:spock-core:_"
     testImplementation "org.hamcrest:hamcrest-core:_"
+    testImplementation "org.testcontainers:spock:_"
+    testImplementation 'org.testcontainers:mysql:_'
     testRuntimeOnly 'net.bytebuddy:byte-buddy:_'
     testRuntimeOnly "org.objenesis:objenesis:_"
 }
@@ -95,10 +99,22 @@ java {
     targetCompatibility = JavaVersion.toVersion("17")
 }
 
+spotbugs {
+    excludeFilter = file("${rootDir}/spotbugs-exclude.xml")
+}
+
 test {
     useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
+    }
+    def homeDirectory = System.getProperty("user.home")
+    def colimaSocketFilename = "${homeDirectory}/.colima/default/docker.sock"
+    def colimaSocket = new File(colimaSocketFilename)
+    if (colimaSocket.exists()) {
+        environment("DOCKER_HOST", "unix://${colimaSocketFilename}")
+        environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
+        environment("TESTCONTAINERS_RYUK_DISABLED", "true")
     }
 }

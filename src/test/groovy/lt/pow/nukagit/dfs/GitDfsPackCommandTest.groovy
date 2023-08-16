@@ -2,7 +2,7 @@ package lt.pow.nukagit.dfs
 
 import spock.lang.Specification
 
-class GitDfsPackCommandSpecification extends Specification {
+class GitDfsPackCommandTest extends Specification {
     def "test quoted string parsing"(String input, String[] expected) {
         expect:
         GitDfsPackCommand.extractQuotedStrings(input) == expected
