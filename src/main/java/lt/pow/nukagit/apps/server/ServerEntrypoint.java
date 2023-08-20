@@ -2,10 +2,10 @@ package lt.pow.nukagit.apps.server;
 
 import com.google.common.io.Closer;
 import dagger.Lazy;
-import io.opencensus.stats.Measure;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Metrics;
 import lt.pow.nukagit.lib.cli.CliCommand;
 import lt.pow.nukagit.lib.lifecycle.Managed;
-import lt.pow.nukagit.lib.metrics.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -18,9 +18,7 @@ import java.util.Set;
 @CommandLine.Command(name = "serve", description = "Start the server")
 public class ServerEntrypoint implements CliCommand {
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerEntrypoint.class);
-
-  private static final Measure.MeasureLong startupCounter =
-      Metrics.registerCounter("startup", "Startup counter");
+  Counter startupCounter = Metrics.counter("startup");
   private final Lazy<Set<Managed>> servers;
 
   @Inject
@@ -36,7 +34,7 @@ public class ServerEntrypoint implements CliCommand {
       // Using Closer even though it is designed around streams, because it is the only helper
       // library I found
       servers.get().stream().map(closer::register).forEach(Managed::start);
-      Metrics.count(startupCounter);
+      startupCounter.increment();
       Thread.currentThread().join();
     } catch (Exception e) {
       throw new RuntimeException(e);

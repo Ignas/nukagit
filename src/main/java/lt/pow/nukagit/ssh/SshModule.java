@@ -7,7 +7,6 @@ import dagger.multibindings.IntoSet;
 import lt.pow.nukagit.dfs.DfsRepositoryResolver;
 import lt.pow.nukagit.dfs.GitDfsPackCommandFactory;
 import lt.pow.nukagit.lib.lifecycle.Managed;
-import lt.pow.nukagit.prometheus.ManagedPrometheusServer;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.auth.password.AcceptAllPasswordAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
