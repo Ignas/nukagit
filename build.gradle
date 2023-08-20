@@ -94,7 +94,7 @@ dependencies {
     testRuntimeOnly 'net.bytebuddy:byte-buddy:_'
     testRuntimeOnly "org.objenesis:objenesis:_"
 
-    javaagent("io.opentelemetry.javaagent:opentelemetry-javaagent:1.11.1")
+    javaagent("io.opentelemetry.javaagent:opentelemetry-javaagent:_")
 }
 
 java {
