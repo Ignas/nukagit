@@ -1,6 +1,6 @@
 package lt.pow.nukagit.dfs;
 
-import lt.pow.nukagit.db.command.RepositoriesCommandDao;
+import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
@@ -19,11 +19,11 @@ public class DfsRepositoryResolver {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DfsRepositoryResolver.class);
   private final ConcurrentHashMap<String, Repository> repositoryCache;
-  private final RepositoriesCommandDao repositoriesCommandDao;
+  private final NukagitDfsDao dfsDao;
 
   @Inject
-  public DfsRepositoryResolver(RepositoriesCommandDao repositoriesCommandDao) {
-    this.repositoriesCommandDao = repositoriesCommandDao;
+  public DfsRepositoryResolver(NukagitDfsDao dfsDao) {
+    this.dfsDao = dfsDao;
     repositoryCache = new ConcurrentHashMap<>();
   }
 
@@ -33,8 +33,9 @@ public class DfsRepositoryResolver {
     String repositoryName = args[1];
 
     if (repositoryName.startsWith("/minio/")) {
-      return new NukagitDfsRepository.Builder()
-          .setRepositoryDescription(new DfsRepositoryDescription(repositoryName))
+      var id = dfsDao.upsertRepositoryAndGetId(repositoryName);
+      return new NukagitDfsRepository.Builder(dfsDao)
+          .setRepositoryDescription(new NukagitDfsRepositoryDescription(id, repositoryName))
           // .withPath(new Path("testRepositories", name))
           // .withBlockSize(64)
           // .withReplication((short) 2)

@@ -1,7 +1,8 @@
 CREATE TABLE repositories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id CHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
+    push_id CHAR(36),
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     deleted_on TIMESTAMP NULL DEFAULT NULL
 );
@@ -13,10 +14,23 @@ ALTER TABLE repositories
 ALTER TABLE repositories
     ADD CONSTRAINT UNIQUE (name, not_archived);
 
+CREATE TABLE pushes (
+    id CHAR(36) PRIMARY KEY,
+    repository_id CHAR(36) NOT NULL,
+    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted_on TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (repository_id) REFERENCES repositories(id)
+);
+
+
 CREATE TABLE packs (
-    repository_id INT NOT NULL,
-    name CHAR(36) NOT NULL,
+    push_id CHAR(36) NOT NULL,
+    -- name is a uuid + - + source
+    name CHAR(128) NOT NULL,
     source varchar(50) NOT NULL,
-    ext varchar(10) NOT NULL,
-    PRIMARY KEY (repository_id, name, source, ext)
-)
+    ext varchar(50) NOT NULL,
+    file_size BIGINT NOT NULL,
+    object_count BIGINT NOT NULL,
+    FOREIGN KEY (push_id) REFERENCES pushes(id),
+    PRIMARY KEY (push_id, name, source, ext)
+);

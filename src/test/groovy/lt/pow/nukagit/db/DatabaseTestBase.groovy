@@ -34,9 +34,7 @@ abstract class DatabaseTestBase extends Specification {
         DataSource dataSource = new HikariDataSource(hikariConfig)
 
         // Create JDBI instance
-        jdbi = Jdbi.create(dataSource).installPlugin(new SqlObjectPlugin())
-        JdbiImmutables jdbiImmutables = jdbi.getConfig(JdbiImmutables.class)
-        jdbiImmutables.registerImmutable(Pack.class)
+        jdbi = DatabaseModule.jdbi(dataSource)
 
         // Run migrations
         Flyway flyway = Flyway.configure().dataSource(dataSource).load()

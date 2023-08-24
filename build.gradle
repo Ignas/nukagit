@@ -85,6 +85,7 @@ dependencies {
     testImplementation 'org.testcontainers:mysql:_'
     testRuntimeOnly 'net.bytebuddy:byte-buddy:_'
     testRuntimeOnly "org.objenesis:objenesis:_"
+    testImplementation 'org.jeasy:easy-random-core:_'
 
     javaagent("io.opentelemetry.javaagent:opentelemetry-javaagent:_")
 }

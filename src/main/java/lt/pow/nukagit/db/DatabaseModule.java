@@ -4,15 +4,15 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import dagger.Module;
 import dagger.Provides;
-import lt.pow.nukagit.db.command.RepositoriesCommandDao;
-import lt.pow.nukagit.db.query.PackQueryDao;
+import javax.inject.Singleton;
+import javax.sql.DataSource;
+import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.entities.Pack;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
 import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.mapper.immutables.JdbiImmutables;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
-
-import javax.inject.Singleton;
-import javax.sql.DataSource;
 
 @Module
 public class DatabaseModule {
@@ -37,19 +37,17 @@ public class DatabaseModule {
 
   @Provides
   @Singleton
-  Jdbi jdbi(DataSource dataSource) {
-    return Jdbi.create(dataSource).installPlugin(new SqlObjectPlugin());
+  static Jdbi jdbi(DataSource dataSource) {
+    var jdbi = Jdbi.create(dataSource).installPlugin(new SqlObjectPlugin());
+    jdbi.registerArgument(new UUIDArgumentFactory());
+    JdbiImmutables jdbiImmutables = jdbi.getConfig(JdbiImmutables.class);
+    jdbiImmutables.registerImmutable(Pack.class);
+    return jdbi;
   }
 
   @Provides
   @Singleton
-  RepositoriesCommandDao repositoriesCommandDao(Jdbi jdbi) {
-    return jdbi.onDemand(RepositoriesCommandDao.class);
-  }
-
-  @Provides
-  @Singleton
-  PackQueryDao packQueryDao(Jdbi jdbi) {
-    return jdbi.onDemand(PackQueryDao.class);
+  NukagitDfsDao dfsDao(Jdbi jdbi) {
+    return jdbi.onDemand(NukagitDfsDao.class);
   }
 }

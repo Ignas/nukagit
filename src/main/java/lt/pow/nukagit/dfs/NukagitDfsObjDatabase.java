@@ -7,9 +7,16 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NonReadableChannelException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
+import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.entities.ImmutablePack;
+import lt.pow.nukagit.db.entities.Pack;
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase;
 import org.eclipse.jgit.internal.storage.dfs.DfsOutputStream;
 import org.eclipse.jgit.internal.storage.dfs.DfsPackDescription;
@@ -17,52 +24,133 @@ import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
 import org.eclipse.jgit.internal.storage.dfs.ReadableChannel;
 import org.eclipse.jgit.internal.storage.pack.PackExt;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class NukagitDfsObjDatabase extends DfsObjDatabase {
   Logger LOGGER = LoggerFactory.getLogger(NukagitDfsObjDatabase.class);
+  private final NukagitDfsDao dfsDao;
   private final int blockSize;
 
+  private final UUID repositoryId;
+
   public NukagitDfsObjDatabase(
-      NukagitDfsRepository nukagitDfsRepository, DfsReaderOptions readerOptions, int blockSize) {
+      NukagitDfsRepository nukagitDfsRepository,
+      NukagitDfsDao dfsDao,
+      DfsReaderOptions readerOptions,
+      int blockSize) {
     super(nukagitDfsRepository, readerOptions);
     LOGGER.debug(
         "NukagitDfsObjDatabase: blockSize={} for repository {}",
         blockSize,
         nukagitDfsRepository.getDescription().getRepositoryName());
-    // Pass in obj dao
+    // Should I add one more abstraction layer like a repository class on top of all the dao classes
+    // and minio?
+    this.dfsDao = dfsDao;
     this.blockSize = blockSize;
+    this.repositoryId =
+        ((NukagitDfsRepositoryDescription) getRepository().getDescription()).getRepositoryId();
   }
 
   @Override
   protected List<DfsPackDescription> listPacks() {
-    // This method apparently must return a mutable list.
-    LOGGER.debug("listPacks");
-    // PackQueryDAO.listPacks()
-    return new ArrayList<>();
+    var packDescriptionList =
+        dfsDao.listPacks(repositoryId).stream()
+            // Group packs by name + source
+            // Each pack will contain all the exts
+            .collect(
+                Collectors.groupingBy(pack -> String.format("%s\0%s", pack.name(), pack.source())))
+            .values()
+            .stream()
+            .map(
+                (List<Pack> packs) ->
+                    mapPacksToPackDescriptions(getRepository().getDescription(), blockSize, packs))
+            .toList();
+    LOGGER.debug("listPacks returning {} packs", packDescriptionList.size());
+    // This method must return a mutable list.
+    return new ArrayList<>(packDescriptionList);
+  }
+
+  @NotNull
+  public static DfsPackDescription mapPacksToPackDescriptions(
+      DfsRepositoryDescription repositoryDescription, int blockSize, List<Pack> packs) {
+    var firstPack = packs.get(0);
+    var packSource = PackSource.valueOf(firstPack.source());
+    // TODO: probably want to pass the repo uuid along
+    var desc = new MinioPack(firstPack.name(), repositoryDescription, packSource);
+    packs.forEach(
+        pack -> {
+          var ext = getExt(pack);
+          desc.addFileExt(ext);
+          desc.setBlockSize(ext, blockSize);
+          desc.setFileSize(ext, pack.file_size());
+        });
+    desc.setObjectCount(firstPack.object_count());
+    return desc;
+  }
+
+  @NotNull
+  private static PackExt getExt(Pack pack) {
+    var ext =
+        Arrays.stream(PackExt.values())
+            .filter(packExt -> packExt.getExtension().equals(pack.ext()))
+            .findFirst();
+    return ext.orElseThrow(
+        () -> new IllegalArgumentException(String.format("Invalid pack Extension %s", pack.ext())));
   }
 
   @Override
   protected DfsPackDescription newPack(PackSource source) {
-    LOGGER.debug("newPack: source={}", source.name());
-    // upsert pack into database
-    return new MinioPack(
-        "pack-" + UUID.randomUUID() + "-" + source.name(),
-        getRepository().getDescription(),
-        source);
+    var packName = "pack-" + UUID.randomUUID() + "-" + source.name();
+    var pack = new MinioPack(packName, getRepository().getDescription(), source);
+    LOGGER.debug("newPack: pack={} source={} packName={}", pack, source, packName);
+    return pack;
   }
 
   @Override
-  protected synchronized void commitPackImpl(
+  protected void commitPackImpl(
       Collection<DfsPackDescription> desc, Collection<DfsPackDescription> replace) {
     LOGGER.debug("commitPackImpl: desc={}, replace={}", desc, replace);
-    // Update pack list in sql
-    // Begin transaction
-    // add packs in desc
-    // remove packs in replace
-    // keep packs already there
+    ArrayList<Pack> newPacks = mapPackDescriptionsToPacks(desc);
+    ArrayList<Pack> removePacks = mapPackDescriptionsToPacks(replace);
+    LOGGER.debug("commitPackImpl: newPacks={}, removePacks={}", newPacks, removePacks);
+    dfsDao.commitPack(repositoryId, newPacks, removePacks);
     clearCache();
+  }
+
+  @NotNull
+  @VisibleForTesting
+  public static ArrayList<Pack> mapPackDescriptionsToPacks(Collection<DfsPackDescription> desc) {
+    var packs = new ArrayList<Pack>();
+    if (desc == null) {
+      return packs;
+    }
+    desc.forEach(
+        packDesc -> {
+          // This is the only way to get the pack name
+          var name = packDesc.getFileName(PackExt.PACK);
+          int dot = name.lastIndexOf('.');
+          var packName = (dot < 0) ? name : name.substring(0, dot);
+          var packSource = packDesc.getPackSource();
+          Arrays.stream(PackExt.values())
+              .forEach(
+                  ext -> {
+                    if (packDesc.hasFileExt(ext)) {
+                      var extSize = packDesc.getFileSize(ext);
+                      var objectCount = packDesc.getObjectCount();
+                      packs.add(
+                          ImmutablePack.builder()
+                              .name(packName)
+                              .source(packSource.name())
+                              .ext(ext.getExtension())
+                              .file_size(extSize)
+                              .object_count(objectCount)
+                              .build());
+                    }
+                  });
+        });
+    return packs;
   }
 
   @Override
