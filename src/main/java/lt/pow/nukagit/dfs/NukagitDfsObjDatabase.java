@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import lt.pow.nukagit.db.entities.ImmutablePack;
 import lt.pow.nukagit.db.entities.Pack;
@@ -54,6 +55,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   }
 
   @Override
+  @WithSpan
   protected List<DfsPackDescription> listPacks() {
     var packDescriptionList =
         dfsDao.listPacks(repositoryId).stream()
@@ -101,6 +103,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   }
 
   @Override
+  @WithSpan
   protected DfsPackDescription newPack(PackSource source) {
     var packName = "pack-" + UUID.randomUUID() + "-" + source.name();
     var pack = new MinioPack(packName, getRepository().getDescription(), source);
@@ -109,6 +112,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   }
 
   @Override
+  @WithSpan
   protected void commitPackImpl(
       Collection<DfsPackDescription> desc, Collection<DfsPackDescription> replace) {
     LOGGER.debug("commitPackImpl: desc={}, replace={}", desc, replace);
@@ -154,6 +158,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   }
 
   @Override
+  @WithSpan
   protected void rollbackPack(Collection<DfsPackDescription> desc) {
     LOGGER.debug("rollbackPack: desc={}", desc);
     // Do nothing. Pack is not recorded until commitPack.
@@ -173,6 +178,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   }
 
   @Override
+  @WithSpan
   public long getApproximateObjectCount() {
     LOGGER.debug("getApproximateObjectCount");
     // TODO: reimplement as a single query
@@ -214,6 +220,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
      * greater than the length of the array b, then an IndexOutOfBoundsException is thrown.
      */
     @Override
+    @WithSpan
     public void write(byte[] buf, int off, int len) throws IOException {
       LOGGER.debug("write: buf.length={}, off={}, len={}", buf.length, off, len);
     }
@@ -228,6 +235,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
      * <p>NOTE: this has to support reading from packs not yet flushed.
      */
     @Override
+    @WithSpan
     public int read(long position, ByteBuffer buf) throws IOException {
       LOGGER.debug("read: position={}, buf={}", position, buf);
       return 0;
@@ -249,6 +257,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
      * @throws IOException if an I/O error occurs.
      */
     @Override
+    @WithSpan
     public void flush() throws IOException {
       LOGGER.debug("flush");
     }
@@ -308,6 +317,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
      * @throws IOException If some other I/O error occurs
      */
     @Override
+    @WithSpan
     public int read(ByteBuffer dst) throws IOException {
       LOGGER.debug("read: dst={}", dst);
       return 0;
@@ -319,6 +329,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
     }
 
     @Override
+    @WithSpan
     public void position(long newPosition) throws IOException {
       LOGGER.debug("position: newPosition={}", newPosition);
       position = (int) newPosition;
@@ -348,6 +359,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
     }
 
     @Override
+    @WithSpan
     public void close() {
       LOGGER.debug("close");
       // Might want to signal this to the cache

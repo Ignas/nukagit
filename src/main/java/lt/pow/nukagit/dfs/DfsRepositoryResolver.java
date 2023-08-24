@@ -1,5 +1,6 @@
 package lt.pow.nukagit.dfs;
 
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
@@ -27,6 +28,7 @@ public class DfsRepositoryResolver {
     repositoryCache = new ConcurrentHashMap<>();
   }
 
+  @WithSpan
   public synchronized Repository resolveDfsRepository(String username, String[] args)
       throws IOException {
     LOGGER.debug("resolveDfsRepository: username={}, args={}", username, args);

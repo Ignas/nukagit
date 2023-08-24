@@ -1,14 +1,17 @@
 package lt.pow.nukagit.dfs;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.git.pack.GitPackCommand;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +29,7 @@ public class GitDfsPackCommand extends GitPackCommand {
   }
 
   @Override
+  @WithSpan
   public void run() {
     String command = getCommand();
     try {
@@ -38,9 +42,9 @@ public class GitDfsPackCommand extends GitPackCommand {
       var db = dfsRepositoryResolver.resolveDfsRepository(getServerSession().getUsername(), args);
       String subCommand = args[0];
       if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
-        new UploadPack(db).upload(getInputStream(), getOutputStream(), getErrorStream());
+        uploadPack(db);
       } else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
-        new ReceivePack(db).receive(getInputStream(), getOutputStream(), getErrorStream());
+        receivePack(db);
       } else {
         throw new IllegalArgumentException("Unknown git command: " + command);
       }
@@ -50,6 +54,16 @@ public class GitDfsPackCommand extends GitPackCommand {
       LOGGER.error("Error running git command: {}", command, t);
       onExit(-1, t.getClass().getSimpleName());
     }
+  }
+
+  @WithSpan
+  private void receivePack(Repository db) throws IOException {
+    new ReceivePack(db).receive(getInputStream(), getOutputStream(), getErrorStream());
+  }
+
+  @WithSpan
+  private void uploadPack(Repository db) throws IOException {
+    new UploadPack(db).upload(getInputStream(), getOutputStream(), getErrorStream());
   }
 
   @VisibleForTesting

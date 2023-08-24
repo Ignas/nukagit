@@ -9,6 +9,7 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 @Singleton
 @CommandLine.Command(name = "migrate", description = "Run database migrations")
@@ -22,6 +23,7 @@ public class MigrateEntrypoint implements CliCommand {
   }
 
   @Override
+  @WithSpan
   public void run() {
     LOGGER.info("Running Migrations!");
     Flyway flyway = Flyway.configure().dataSource(dataSource.get()).load();
