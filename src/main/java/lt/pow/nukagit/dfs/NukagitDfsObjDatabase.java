@@ -1,20 +1,36 @@
 package lt.pow.nukagit.dfs;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.errors.ErrorResponseException;
+import io.minio.errors.InsufficientDataException;
+import io.minio.errors.InternalException;
+import io.minio.errors.InvalidResponseException;
+import io.minio.errors.MinioException;
+import io.minio.errors.ServerException;
+import io.minio.errors.XmlParserException;
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.ClosedByInterruptException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.NonReadableChannelException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import com.google.common.annotations.VisibleForTesting;
-import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import lt.pow.nukagit.db.entities.ImmutablePack;
 import lt.pow.nukagit.db.entities.Pack;
@@ -30,7 +46,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class NukagitDfsObjDatabase extends DfsObjDatabase {
-  Logger LOGGER = LoggerFactory.getLogger(NukagitDfsObjDatabase.class);
+  private final Logger LOGGER = LoggerFactory.getLogger(NukagitDfsObjDatabase.class);
+  private final MinioClient minio;
   private final NukagitDfsDao dfsDao;
   private final int blockSize;
 
@@ -39,9 +56,11 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   public NukagitDfsObjDatabase(
       NukagitDfsRepository nukagitDfsRepository,
       NukagitDfsDao dfsDao,
+      MinioClient minio,
       DfsReaderOptions readerOptions,
       int blockSize) {
     super(nukagitDfsRepository, readerOptions);
+    this.minio = minio;
     LOGGER.debug(
         "NukagitDfsObjDatabase: blockSize={} for repository {}",
         blockSize,
@@ -167,14 +186,13 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   @Override
   protected ReadableChannel openFile(DfsPackDescription desc, PackExt ext) throws IOException {
     LOGGER.debug("openFile: desc={}, ext={}", desc, ext);
-    // Pass along minio client and database client
-    return new MinioBlockReadableChannel((MinioPack) desc, blockSize);
+    return new MinioBlockReadableChannel(minio, (MinioPack) desc, ext, blockSize);
   }
 
   @Override
   protected DfsOutputStream writeFile(DfsPackDescription desc, PackExt ext) throws IOException {
     LOGGER.debug("writeFile: desc={}, ext={}", desc, ext);
-    return new Out((MinioPack) desc, ext, blockSize);
+    return new Out(minio, (MinioPack) desc, ext, blockSize);
   }
 
   @Override
@@ -197,11 +215,24 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
 
   private static class Out extends DfsOutputStream {
     Logger LOGGER = LoggerFactory.getLogger(Out.class);
+    private final byte[] buffer;
+    private final ByteArrayOutputStream wholePackBuffer;
+    private int positionInChunk;
+    private int chunkCount;
+    private final MinioClient minio;
+    private final MinioPack desc;
+    private final PackExt ext;
     private final int blockSize;
 
-    public Out(MinioPack desc, PackExt ext, int blockSize) {
+    public Out(MinioClient minio, MinioPack desc, PackExt ext, int blockSize) {
+      this.minio = minio;
+      this.desc = desc;
+      this.ext = ext;
       this.blockSize = blockSize;
-      // Pass in minio client
+      this.positionInChunk = 0;
+      this.chunkCount = 0;
+      this.buffer = new byte[blockSize];
+      this.wholePackBuffer = new ByteArrayOutputStream();
     }
 
     @Override
@@ -209,118 +240,166 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
       return blockSize;
     }
 
-    /**
-     * Writes len bytes from the specified byte array starting at offset off to this output stream.
-     * The general contract for write(b, off, len) is that some of the bytes in the array b are
-     * written to the output stream in order; element b[off] is the first byte written and
-     * b[off+len-1] is the last byte written by this operation. The write method of OutputStream
-     * calls the write method of one argument on each of the bytes to be written out. Subclasses are
-     * encouraged to override this method and provide a more efficient implementation. If b is null,
-     * a NullPointerException is thrown. If off is negative, or len is negative, or off+len is
-     * greater than the length of the array b, then an IndexOutOfBoundsException is thrown.
-     */
     @Override
     @WithSpan
-    public void write(byte[] buf, int off, int len) throws IOException {
+    public void write(byte[] buf, int off, @SpanAttribute int len) throws IOException {
       LOGGER.debug("write: buf.length={}, off={}, len={}", buf.length, off, len);
+      wholePackBuffer.write(buf, off, len);
+      int remaining = len;
+      int offset = off;
+
+      while (remaining > 0) {
+        int bytesToWrite = Math.min(remaining, blockSize - positionInChunk);
+        System.arraycopy(buf, offset, buffer, positionInChunk, bytesToWrite);
+        positionInChunk += bytesToWrite;
+        remaining -= bytesToWrite;
+        offset += bytesToWrite;
+
+        if (positionInChunk == blockSize) {
+          flushChunk();
+        }
+      }
     }
 
-    /**
-     * Read back a portion of already written data. The writing position of the output stream is not
-     * affected by a read. Params: position – offset to read from. buf – buffer to populate. Up to
-     * buf.remaining() bytes will be read from position. Returns: number of bytes actually read.
-     * Throws: IOException – reading is not supported, or the read cannot be performed due to DFS
-     * errors.
-     *
-     * <p>NOTE: this has to support reading from packs not yet flushed.
-     */
     @Override
     @WithSpan
-    public int read(long position, ByteBuffer buf) throws IOException {
+    public int read(@SpanAttribute long position, ByteBuffer buf) throws IOException {
       LOGGER.debug("read: position={}, buf={}", position, buf);
-      return 0;
+      byte[] byteArray = wholePackBuffer.toByteArray();
+      int length = byteArray.length;
+      int remaining = Math.min(buf.remaining(), length - (int) position);
+
+      if (remaining <= 0) {
+        return -1; // End of data
+      }
+
+      buf.put(byteArray, (int) position, remaining);
+      return remaining;
     }
 
-    /**
-     * Flushes this output stream and forces any buffered output bytes to be written out. The
-     * general contract of {@code flush} is that calling it is an indication that, if any bytes
-     * previously written have been buffered by the implementation of the output stream, such bytes
-     * should immediately be written to their intended destination.
-     *
-     * <p>If the intended destination of this stream is an abstraction provided by the underlying
-     * operating system, for example a file, then flushing the stream guarantees only that bytes
-     * previously written to the stream are passed to the operating system for writing; it does not
-     * guarantee that they are actually written to a physical device such as a disk drive.
-     *
-     * <p>The {@code flush} method of {@code OutputStream} does nothing.
-     *
-     * @throws IOException if an I/O error occurs.
-     */
+    @WithSpan
+    public void flushChunk() throws IOException {
+      if (positionInChunk == 0) {
+        return;
+      }
+      try {
+        minio.putObject(
+            PutObjectArgs.builder()
+                .bucket("nukagit")
+                .object(
+                    String.format(
+                        "%s/%05d-%s",
+                        ((NukagitDfsRepositoryDescription) desc.getRepositoryDescription())
+                            .getRepositoryId(),
+                        chunkCount,
+                        desc.getFileName(ext)))
+                .stream(new ByteArrayInputStream(buffer, 0, positionInChunk), positionInChunk, -1)
+                .contentType("application/octet-stream")
+                .build());
+        this.chunkCount += 1;
+        this.positionInChunk = 0;
+      } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
+        throw new IOException(e);
+      }
+    }
+
     @Override
     @WithSpan
     public void flush() throws IOException {
       LOGGER.debug("flush");
+      flushChunk();
+    }
+
+    @Override
+    @WithSpan
+    public void close() throws IOException {
+      flushChunk();
+      super.close();
     }
   }
 
   private static class MinioBlockReadableChannel implements ReadableChannel {
-    Logger LOGGER = LoggerFactory.getLogger(MinioBlockReadableChannel.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(MinioBlockReadableChannel.class);
+    private final MinioClient minio;
+    private final PackExt ext;
     private final int blockSize;
+    private final MinioPack desc;
     private int position;
     private boolean open = true;
     private int readAheadBytes;
 
-    public MinioBlockReadableChannel(MinioPack desc, int blockSize) {
+    private final LoadingCache<String, byte[]> blockCache;
+
+    public MinioBlockReadableChannel(
+        MinioClient minio, MinioPack desc, PackExt ext, int blockSize) {
+      // TODO: Inject this cache and share it between all the channels
+      blockCache =
+          CacheBuilder.newBuilder()
+              .maximumSize(100)
+              .expireAfterAccess(10, TimeUnit.MINUTES)
+              .build(CacheLoader.from(this::getBlock));
+      this.ext = ext;
       this.blockSize = blockSize;
       this.position = 0;
       this.readAheadBytes = 0;
+      this.minio = minio;
+      this.desc = desc;
     }
 
-    /**
-     * Reads a sequence of bytes from this channel into the given buffer.
-     *
-     * <p>An attempt is made to read up to <i>r</i> bytes from the channel, where <i>r</i> is the
-     * number of bytes remaining in the buffer, that is, {@code dst.remaining()}, at the moment this
-     * method is invoked.
-     *
-     * <p>Suppose that a byte sequence of length <i>n</i> is read, where {@code 0}&nbsp;{@code
-     * <=}&nbsp;<i>n</i>&nbsp;{@code <=}&nbsp;<i>r</i>. This byte sequence will be transferred into
-     * the buffer so that the first byte in the sequence is at index <i>p</i> and the last byte is
-     * at index <i>p</i>&nbsp;{@code +}&nbsp;<i>n</i>&nbsp;{@code -}&nbsp;{@code 1}, where <i>p</i>
-     * is the buffer's position at the moment this method is invoked. Upon return the buffer's
-     * position will be equal to <i>p</i>&nbsp;{@code +}&nbsp;<i>n</i>; its limit will not have
-     * changed.
-     *
-     * <p>A read operation might not fill the buffer, and in fact it might not read any bytes at
-     * all. Whether or not it does so depends upon the nature and state of the channel. A socket
-     * channel in non-blocking mode, for example, cannot read any more bytes than are immediately
-     * available from the socket's input buffer; similarly, a file channel cannot read any more
-     * bytes than remain in the file. It is guaranteed, however, that if a channel is in blocking
-     * mode and there is at least one byte remaining in the buffer then this method will block until
-     * at least one byte is read.
-     *
-     * <p>This method may be invoked at any time. If another thread has already initiated a read
-     * operation upon this channel, however, then an invocation of this method will block until the
-     * first operation is complete.
-     *
-     * @param dst The buffer into which bytes are to be transferred
-     * @return The number of bytes read, possibly zero, or {@code -1} if the channel has reached
-     *     end-of-stream
-     * @throws IllegalArgumentException If the buffer is read-only
-     * @throws NonReadableChannelException If this channel was not opened for reading
-     * @throws ClosedChannelException If this channel is closed
-     * @throws AsynchronousCloseException If another thread closes this channel while the read
-     *     operation is in progress
-     * @throws ClosedByInterruptException If another thread interrupts the current thread while the
-     *     read operation is in progress, thereby closing the channel and setting the current
-     *     thread's interrupt status
-     * @throws IOException If some other I/O error occurs
-     */
+    private byte[] getBlock(String key) throws UncheckedIOException {
+      try {
+        try {
+          return minio
+              .getObject(GetObjectArgs.builder().bucket("nukagit").object(key).build())
+              .readAllBytes();
+        } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
+          throw new IOException(e);
+        }
+      } catch (IOException ex) {
+        throw new UncheckedIOException(
+            String.format("Failed to load a block %s from cache", key), ex);
+      }
+    }
+
     @Override
     @WithSpan
     public int read(ByteBuffer dst) throws IOException {
       LOGGER.debug("read: dst={}", dst);
-      return 0;
+      long start = position();
+      int positionInBlock = (int) (position() % blockSize);
+      int totalBytesRead = 0;
+
+      while (dst.remaining() > 0) {
+        long blockNumber = start / blockSize;
+        String blockKey = convertBlockNumberToKey(blockNumber);
+
+        byte[] blockData;
+        try {
+          blockData = blockCache.getUnchecked(blockKey);
+        } catch (UncheckedIOException e) {
+          throw new IOException(e);
+        }
+
+        int bytesToRead = Math.min(blockSize - positionInBlock, dst.remaining());
+
+        dst.put(blockData, positionInBlock, bytesToRead);
+        totalBytesRead += bytesToRead;
+
+        positionInBlock = 0; // Reset positionInBlock for subsequent blocks
+        start += bytesToRead;
+        if (start >= size()) {
+          break; // Reached end of the file
+        }
+      }
+      return totalBytesRead;
+    }
+
+    private String convertBlockNumberToKey(long blockNumber) {
+      return String.format(
+          "%s/%05d-%s",
+          ((NukagitDfsRepositoryDescription) desc.getRepositoryDescription()).getRepositoryId(),
+          blockNumber,
+          desc.getFileName(ext));
     }
 
     @Override
@@ -337,9 +416,9 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
 
     @Override
     public long size() throws IOException {
-      LOGGER.debug("size");
-      // Capture as part of the pack desc?
-      return 0;
+      var size = desc.getFileSize(ext);
+      LOGGER.debug("size={}", size);
+      return size;
     }
 
     @Override
@@ -362,8 +441,8 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
     @WithSpan
     public void close() {
       LOGGER.debug("close");
-      // Might want to signal this to the cache
       open = false;
+      blockCache.invalidateAll();
     }
   }
 }

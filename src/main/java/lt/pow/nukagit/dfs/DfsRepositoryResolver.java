@@ -1,5 +1,6 @@
 package lt.pow.nukagit.dfs;
 
+import io.minio.MinioClient;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
@@ -21,10 +22,12 @@ public class DfsRepositoryResolver {
   private static final Logger LOGGER = LoggerFactory.getLogger(DfsRepositoryResolver.class);
   private final ConcurrentHashMap<String, Repository> repositoryCache;
   private final NukagitDfsDao dfsDao;
+  private final MinioClient minio;
 
   @Inject
-  public DfsRepositoryResolver(NukagitDfsDao dfsDao) {
+  public DfsRepositoryResolver(NukagitDfsDao dfsDao, MinioClient minio) {
     this.dfsDao = dfsDao;
+    this.minio = minio;
     repositoryCache = new ConcurrentHashMap<>();
   }
 
@@ -36,7 +39,7 @@ public class DfsRepositoryResolver {
 
     if (repositoryName.startsWith("/minio/")) {
       var id = dfsDao.upsertRepositoryAndGetId(repositoryName);
-      return new NukagitDfsRepository.Builder(dfsDao)
+      return new NukagitDfsRepository.Builder(dfsDao, minio)
           .setRepositoryDescription(new NukagitDfsRepositoryDescription(id, repositoryName))
           // .withPath(new Path("testRepositories", name))
           // .withBlockSize(64)

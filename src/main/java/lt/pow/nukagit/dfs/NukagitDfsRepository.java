@@ -2,6 +2,7 @@ package lt.pow.nukagit.dfs;
 
 import java.io.IOException;
 
+import io.minio.MinioClient;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase;
 import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
@@ -15,14 +16,16 @@ public class NukagitDfsRepository extends DfsRepository {
   private final DfsObjDatabase objDb;
   private final org.eclipse.jgit.lib.RefDatabase refDb;
   private final NukagitDfsDao dfsDao;
+  private final MinioClient minio;
 
   public NukagitDfsRepository(Builder builder) {
     super(builder);
     this.readerOptions = builder.getReaderOptions();
     this.dfsDao = builder.getDfsDao();
+    this.minio = builder.getMinio();
     // Should I create these whenever they are retrieved?
     // TODO: Test different block sizes
-    objDb = new NukagitDfsObjDatabase(this, dfsDao, this.readerOptions, 1024 * 1024);
+    objDb = new NukagitDfsObjDatabase(this, dfsDao, minio, this.readerOptions, 1024 * 1024);
     refDb = new RefDatabase(this);
   }
 
@@ -36,10 +39,12 @@ public class NukagitDfsRepository extends DfsRepository {
 
   public static class Builder extends DfsRepositoryBuilder<Builder, NukagitDfsRepository> {
     private NukagitDfsDao dfsDao;
+    private final MinioClient minio;
 
-    public Builder(NukagitDfsDao dfsDao) {
+    public Builder(NukagitDfsDao dfsDao, MinioClient minio) {
       super();
       this.dfsDao = dfsDao;
+      this.minio = minio;
     }
 
     @Override
@@ -53,6 +58,10 @@ public class NukagitDfsRepository extends DfsRepository {
 
     public NukagitDfsDao getDfsDao() {
       return dfsDao;
+    }
+
+    public MinioClient getMinio() {
+      return minio;
     }
   }
 
