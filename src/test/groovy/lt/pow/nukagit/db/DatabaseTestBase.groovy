@@ -37,7 +37,8 @@ abstract class DatabaseTestBase extends Specification {
         jdbi = DatabaseModule.jdbi(dataSource)
 
         // Run migrations
-        Flyway flyway = Flyway.configure().dataSource(dataSource).load()
+        Flyway flyway = Flyway.configure().dataSource(dataSource).cleanDisabled(false).load()
+        flyway.clean()
         flyway.migrate()
     }
 }
