@@ -1,5 +1,6 @@
 package lt.pow.nukagit.dfs
 
+import io.minio.MinioClient
 import lt.pow.nukagit.db.dao.NukagitDfsDao
 import lt.pow.nukagit.db.entities.ImmutablePack
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
@@ -15,15 +16,18 @@ class NukagitDfsObjDatabaseTest extends Specification {
     NukagitDfsObjDatabase nukagitDfsObjDatabase
     NukagitDfsRepository nukagitDfsRepository
     NukagitDfsDao nukagitDfsDao
+    MinioClient minioClient
     UUID repositoryId = UUID.randomUUID()
 
     def setup() {
         nukagitDfsDao = Mock(NukagitDfsDao.class)
         nukagitDfsRepository = Mock(NukagitDfsRepository.class)
         nukagitDfsRepository.getDescription() >> new NukagitDfsRepositoryDescription(repositoryId, random.nextObject(String.class))
+        minioClient = Mock(MinioClient.class)
         nukagitDfsObjDatabase = new NukagitDfsObjDatabase(
                 nukagitDfsRepository,
                 nukagitDfsDao,
+                minioClient,
                 new DfsReaderOptions(),
                 1024)
     }

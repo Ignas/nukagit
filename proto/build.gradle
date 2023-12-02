@@ -17,6 +17,11 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:_'
 }
 
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
 protobuf {
     protoc {
         // The artifact spec for the Protobuf Compiler
