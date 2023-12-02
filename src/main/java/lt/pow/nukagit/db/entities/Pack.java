@@ -10,11 +10,11 @@ public interface Pack {
 
   String ext();
 
-  long file_size();
+  long fileSize();
 
-  long object_count();
+  long objectCount();
 
-  long min_update_index();
+  long minUpdateIndex();
 
-  long max_update_index();
+  long maxUpdateIndex();
 }

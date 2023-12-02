@@ -40,7 +40,7 @@ public interface NukagitDfsDao {
 
   @SqlBatch(
       "INSERT INTO packs (push_id, name, source, ext, file_size, object_count, min_update_index, max_update_index)" +
-              " VALUES (:pushId, :name, :source, :ext, :file_size, :object_count, :min_update_index, :max_update_index)")
+              " VALUES (:pushId, :name, :source, :ext, :fileSize, :objectCount, :minUpdateIndex, :maxUpdateIndex)")
   @BatchChunkSize(50)
   void insertPacks(@Bind("pushId") UUID pushId, @BindMethods List<Pack> packs);
 

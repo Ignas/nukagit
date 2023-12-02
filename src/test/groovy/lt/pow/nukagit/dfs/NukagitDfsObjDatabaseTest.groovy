@@ -40,7 +40,7 @@ class NukagitDfsObjDatabaseTest extends Specification {
         def pack = random.nextObject(ImmutablePack.class)
                 .withExt(packExt.extension)
                 .withSource(packSource.name())
-                .withFile_size(Math.abs(random.nextInt()))
+                .withFileSize(Math.abs(random.nextInt()))
         def dfsRepositoryDescription = new DfsRepositoryDescription("repo")
         when:
         def packDescription = nukagitDfsObjDatabase.mapPacksToPackDescriptions(dfsRepositoryDescription, blockSize, [pack])
@@ -50,7 +50,7 @@ class NukagitDfsObjDatabaseTest extends Specification {
         packDescription.packSource == packSource
         packDescription.hasFileExt(packExt)
         packDescription.getBlockSize(packExt) == blockSize
-        packDescription.getFileSize(packExt) == pack.file_size()
+        packDescription.getFileSize(packExt) == pack.fileSize()
     }
 
     def "mapPacksToPackDescriptions can map multiple packs into a description with multiple extensions"() {
@@ -67,10 +67,10 @@ class NukagitDfsObjDatabaseTest extends Specification {
                     .name(packName)
                     .source(packSource.name())
                     .ext(packExtensions.get(i).extension)
-                    .file_size(fileSizes[i])
-                    .object_count(objectCount)
-                    .min_update_index(1)
-                    .max_update_index(1)
+                    .fileSize(fileSizes[i])
+                    .objectCount(objectCount)
+                    .minUpdateIndex(1)
+                    .maxUpdateIndex(1)
                     .build())
         }
 
@@ -124,10 +124,10 @@ class NukagitDfsObjDatabaseTest extends Specification {
                     .name(packName)
                     .source(packSource.name())
                     .ext(packExtensions.get(i).extension)
-                    .file_size(fileSizes[i])
-                    .object_count(objectCount)
-                    .min_update_index(minUpdateIndex)
-                    .max_update_index(maxUpdateIndex)
+                    .fileSize(fileSizes[i])
+                    .objectCount(objectCount)
+                    .minUpdateIndex(minUpdateIndex)
+                    .maxUpdateIndex(maxUpdateIndex)
                     .build())
         }
         when:

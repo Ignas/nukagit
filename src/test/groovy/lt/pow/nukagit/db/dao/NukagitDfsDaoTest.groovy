@@ -80,8 +80,8 @@ class NukagitDfsDaoTest extends DatabaseTestBase {
     def "2 ref packs with same max update index conflict"() {
         given:
         def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))
-        def pack1 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("ref")
-        def pack2 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("ref")
+        def pack1 = random.nextObject(ImmutablePack).withMaxUpdateIndex(15).withExt("ref")
+        def pack2 = random.nextObject(ImmutablePack).withMaxUpdateIndex(15).withExt("ref")
         dao.commitPack(repoId, [pack1], [])
         when:
         dao.commitPack(repoId, [pack2], [])
@@ -92,8 +92,8 @@ class NukagitDfsDaoTest extends DatabaseTestBase {
     def "2 non-ref packs with same max update index don't conflict"() {
         given:
         def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))
-        def pack1 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("idx")
-        def pack2 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("ref")
+        def pack1 = random.nextObject(ImmutablePack).withMaxUpdateIndex(15).withExt("idx")
+        def pack2 = random.nextObject(ImmutablePack).withMaxUpdateIndex(15).withExt("ref")
         when:
         dao.commitPack(repoId, [pack1], [])
         dao.commitPack(repoId, [pack2], [])

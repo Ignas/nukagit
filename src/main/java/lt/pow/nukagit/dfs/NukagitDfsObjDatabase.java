@@ -91,9 +91,9 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
           var ext = getExt(pack);
           desc.addFileExt(ext);
           desc.setBlockSize(ext, blockSize);
-          desc.setFileSize(ext, pack.file_size());
+          desc.setFileSize(ext, pack.fileSize());
         });
-    desc.setObjectCount(firstPack.object_count());
+    desc.setObjectCount(firstPack.objectCount());
     return desc;
   }
 
@@ -158,10 +158,10 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
                               .name(packName)
                               .source(packSource.name())
                               .ext(ext.getExtension())
-                              .file_size(extSize)
-                              .object_count(objectCount)
-                              .min_update_index(packDesc.getMinUpdateIndex())
-                              .max_update_index(packDesc.getMaxUpdateIndex())
+                              .fileSize(extSize)
+                              .objectCount(objectCount)
+                              .minUpdateIndex(packDesc.getMinUpdateIndex())
+                              .maxUpdateIndex(packDesc.getMaxUpdateIndex())
                               .build());
                     }
                   });
