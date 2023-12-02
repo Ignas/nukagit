@@ -1,6 +1,7 @@
 package lt.pow.nukagit.db.dao;
 
 import lt.pow.nukagit.db.entities.Pack;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.BatchChunkSize;
@@ -38,13 +39,14 @@ public interface NukagitDfsDao {
   void createPush(@Bind("repositoryId") UUID repositoryId, @Bind("pushId") UUID pushId);
 
   @SqlBatch(
-      "INSERT INTO packs (push_id, name, source, ext, file_size, object_count) VALUES (:pushId, :name, :source, :ext, :file_size, :object_count)")
+      "INSERT INTO packs (push_id, name, source, ext, file_size, object_count, min_update_index, max_update_index)" +
+              " VALUES (:pushId, :name, :source, :ext, :file_size, :object_count, :min_update_index, :max_update_index)")
   @BatchChunkSize(50)
   void insertPacks(@Bind("pushId") UUID pushId, @BindMethods List<Pack> packs);
 
   @SqlUpdate(
-      "INSERT INTO packs (push_id, name, source, ext, file_size, object_count) "
-          + "SELECT :toPushId, name, source, ext, file_size, object_count "
+      "INSERT INTO packs (push_id, name, source, ext, file_size, object_count, min_update_index, max_update_index) "
+          + "SELECT :toPushId, name, source, ext, file_size, object_count, min_update_index, max_update_index "
           + "FROM packs WHERE push_id = :fromPushId")
   void copyPacks(@Bind("fromPushId") UUID fromPushId, @Bind("toPushId") UUID toPushId);
 
@@ -57,14 +59,18 @@ public interface NukagitDfsDao {
   void setPush(@Bind("repositoryId") UUID repositoryId, @Bind("pushId") UUID pushId);
 
   @Transaction
-  default void commitPack(UUID repositoryId, List<Pack> desc, List<Pack> replace) {
+  default void commitPack(UUID repositoryId, List<Pack> desc, List<Pack> replace) throws NukagitDfsPackConflictException {
     // Get last push
     UUID lastPush = getLastPush(repositoryId);
     // Create a new push
     UUID pushId = UUID.randomUUID();
     createPush(repositoryId, pushId);
-    // Insert new packs
-    insertPacks(pushId, desc);
+    try {
+      // Insert new packs
+      insertPacks(pushId, desc);
+    } catch (UnableToExecuteStatementException e) {
+      throw new NukagitDfsPackConflictException(e);
+    }
     // Copy over previous commit
     copyPacks(lastPush, pushId);
     // Remove replaced packs

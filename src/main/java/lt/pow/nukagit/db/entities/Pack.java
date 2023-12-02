@@ -15,4 +15,8 @@ public interface Pack {
   long file_size();
 
   long object_count();
+
+  long min_update_index();
+
+  long max_update_index();
 }

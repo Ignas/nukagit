@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.dao.NukagitDfsPackConflictException;
 import lt.pow.nukagit.db.entities.ImmutablePack;
 import lt.pow.nukagit.db.entities.Pack;
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase;
@@ -133,12 +134,17 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
   @Override
   @WithSpan
   protected void commitPackImpl(
-      Collection<DfsPackDescription> desc, Collection<DfsPackDescription> replace) {
+      Collection<DfsPackDescription> desc, Collection<DfsPackDescription> replace) throws IOException {
     LOGGER.debug("commitPackImpl: desc={}, replace={}", desc, replace);
     ArrayList<Pack> newPacks = mapPackDescriptionsToPacks(desc);
     ArrayList<Pack> removePacks = mapPackDescriptionsToPacks(replace);
     LOGGER.debug("commitPackImpl: newPacks={}, removePacks={}", newPacks, removePacks);
-    dfsDao.commitPack(repositoryId, newPacks, removePacks);
+    try {
+      dfsDao.commitPack(repositoryId, newPacks, removePacks);
+    } catch (NukagitDfsPackConflictException e) {
+      LOGGER.warn("commitPackImpl: encountered conflict when committing packs", e);
+      throw new IOException(e);
+    }
     clearCache();
   }
 
@@ -169,6 +175,8 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
                               .ext(ext.getExtension())
                               .file_size(extSize)
                               .object_count(objectCount)
+                              .min_update_index(packDesc.getMinUpdateIndex())
+                              .max_update_index(packDesc.getMaxUpdateIndex())
                               .build());
                     }
                   });

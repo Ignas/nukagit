@@ -7,6 +7,7 @@ import org.jeasy.random.EasyRandom
 import org.testcontainers.spock.Testcontainers
 import spock.lang.Shared
 
+
 @Testcontainers
 class NukagitDfsDaoTest extends DatabaseTestBase {
     @Shared
@@ -74,6 +75,30 @@ class NukagitDfsDaoTest extends DatabaseTestBase {
         dao.commitPack(repoId, [], [packs[0]])
         then:
         dao.listPacks(repoId) as Set == packs.drop(1) as Set
+    }
+
+    def "2 ref packs with same max update index conflict"() {
+        given:
+        def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))
+        def pack1 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("ref")
+        def pack2 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("ref")
+        dao.commitPack(repoId, [pack1], [])
+        when:
+        dao.commitPack(repoId, [pack2], [])
+        then:
+        thrown(NukagitDfsPackConflictException)
+    }
+
+    def "2 non-ref packs with same max update index don't conflict"() {
+        given:
+        def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))
+        def pack1 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("idx")
+        def pack2 = random.nextObject(ImmutablePack).withMax_update_index(15).withExt("ref")
+        when:
+        dao.commitPack(repoId, [pack1], [])
+        dao.commitPack(repoId, [pack2], [])
+        then:
+        notThrown(NukagitDfsPackConflictException)
     }
 
     void setup() {

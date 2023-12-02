@@ -31,6 +31,15 @@ CREATE TABLE packs (
     ext varchar(50) NOT NULL,
     file_size BIGINT NOT NULL,
     object_count BIGINT NOT NULL,
+    max_update_index BIGINT NOT NULL,
+    min_update_index BIGINT NOT NULL,
     FOREIGN KEY (push_id) REFERENCES pushes(id),
     PRIMARY KEY (push_id, name, source, ext)
 );
+
+ALTER TABLE packs
+    ADD ref_pack BOOLEAN
+        GENERATED ALWAYS AS (IF(ext = 'ref', 1, NULL)) VIRTUAL;
+
+ALTER TABLE packs
+    ADD CONSTRAINT UNIQUE (max_update_index, ref_pack);

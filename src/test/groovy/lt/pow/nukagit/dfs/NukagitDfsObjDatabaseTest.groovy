@@ -53,7 +53,7 @@ class NukagitDfsObjDatabaseTest extends Specification {
         packDescription.getFileSize(packExt) == pack.file_size()
     }
 
-    def "mapPacksToPackDescriptions can map a multiple pack into a description with multiple extensions"() {
+    def "mapPacksToPackDescriptions can map multiple packs into a description with multiple extensions"() {
         given:
         def packName = random.nextObject(String.class)
         def packSource = random.nextObject(DfsObjDatabase.PackSource.class)
@@ -69,6 +69,8 @@ class NukagitDfsObjDatabaseTest extends Specification {
                     .ext(packExtensions.get(i).extension)
                     .file_size(fileSizes[i])
                     .object_count(objectCount)
+                    .min_update_index(1)
+                    .max_update_index(1)
                     .build())
         }
 
@@ -100,6 +102,8 @@ class NukagitDfsObjDatabaseTest extends Specification {
 
         def dfsRepositoryDescription = new DfsRepositoryDescription("repo")
         def blockSize = Math.abs(random.nextInt())
+        def minUpdateIndex = Math.abs(random.nextInt())
+        def maxUpdateIndex = Math.abs(random.nextInt())
 
         // Construct pack description with all the extensions
         def packDescription = new DfsPackDescription(dfsRepositoryDescription, packName, packSource)
@@ -109,6 +113,8 @@ class NukagitDfsObjDatabaseTest extends Specification {
             packDescription.addFileExt(packExt)
             packDescription.setBlockSize(packExt, blockSize)
             packDescription.setFileSize(packExt, fileSizes[i])
+            packDescription.setMinUpdateIndex(minUpdateIndex)
+            packDescription.setMaxUpdateIndex(maxUpdateIndex)
         }
 
         // Make the expected packs
@@ -120,6 +126,8 @@ class NukagitDfsObjDatabaseTest extends Specification {
                     .ext(packExtensions.get(i).extension)
                     .file_size(fileSizes[i])
                     .object_count(objectCount)
+                    .min_update_index(minUpdateIndex)
+                    .max_update_index(maxUpdateIndex)
                     .build())
         }
         when:
