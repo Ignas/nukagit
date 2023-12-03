@@ -37,7 +37,7 @@ public class DfsRepositoryResolver {
     LOGGER.debug("resolveDfsRepository: username={}, args={}", username, args);
     String repositoryName = args[1];
 
-    if (repositoryName.startsWith("/minio/")) {
+    if (!repositoryName.startsWith("/memory/")) {
       var id = dfsDao.upsertRepositoryAndGetId(repositoryName);
       return new NukagitDfsRepository.Builder(dfsDao, minio)
           .setRepositoryDescription(new NukagitDfsRepositoryDescription(id, repositoryName))
@@ -47,6 +47,7 @@ public class DfsRepositoryResolver {
           .setReaderOptions(new DfsReaderOptions())
           .build();
     }
+    // Keep in memory repositories for simple testing
     return repositoryCache.computeIfAbsent(
         repositoryName, (key) -> new InMemoryRepository(new DfsRepositoryDescription(key)));
   }
