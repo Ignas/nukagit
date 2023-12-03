@@ -3,6 +3,7 @@ package lt.pow.nukagit;
 import dagger.Component;
 import javax.inject.Singleton;
 
+import io.grpc.Server;
 import io.minio.MinioClient;
 import lt.pow.nukagit.apps.migration.MigrateEntrypoint;
 import lt.pow.nukagit.apps.migration.MigrateModule;
@@ -35,6 +36,7 @@ public interface MainComponent {
 
   SshServer sshServer();
 
+  Server grpcServer();
   MigrateEntrypoint migrateEntrypoint();
 
   MinioClient minio();

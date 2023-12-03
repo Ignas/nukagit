@@ -1,14 +1,20 @@
 package lt.pow.nukagit.integration
 
+import io.grpc.ManagedChannel
+import io.grpc.ManagedChannelBuilder
 import io.minio.MakeBucketArgs
 import lt.pow.nukagit.DaggerMainComponent
 import lt.pow.nukagit.MainComponent
+import lt.pow.nukagit.proto.Repositories
+import lt.pow.nukagit.proto.RepositoriesServiceGrpc
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.git.transport.GitSshdSessionFactory
 import org.eclipse.jgit.api.CloneCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.GitCommand
 import org.eclipse.jgit.api.TransportCommand
+import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.testcontainers.containers.GenericContainer
@@ -39,6 +45,7 @@ class NukagitIntegrationTest extends Specification {
     MainComponent component = DaggerMainComponent.create()
     SshClient sshClient
     KeyPair keyPair
+    RepositoriesServiceGrpc.RepositoriesServiceBlockingStub grpcClient
 
     @TempDir
     File testDir
@@ -58,12 +65,19 @@ class NukagitIntegrationTest extends Specification {
         minio:
           endpoint: http://localhost:${minio.getMappedPort(9000)}
         """
+
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+                .usePlaintext()
+                .build()
+        grpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
+
         component.minio().makeBucket(MakeBucketArgs.builder()
             .bucket("nukagit")
             .build())
         component.migrateEntrypoint().run()
 
         component.sshServer().start()
+        component.grpcServer().start()
 
         sshClient = SshClient.setUpDefaultClient()
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA")
@@ -74,10 +88,12 @@ class NukagitIntegrationTest extends Specification {
 
     def cleanup() {
         sshClient.stop()
+        component.grpcServer().shutdown()
         component.sshServer().stop()
     }
 
     def cloneRepository(String path) {
+        grpcClient.createRepository(Repositories.CreateRepositoryRequest.newBuilder().setRepositoryName(path).build())
         var clonePath = new File(testDir, path.replace("/", "-"))
         CloneCommand cloneCommand = Git.cloneRepository()
         cloneCommand.setURI("ssh://git@localhost:2222/" + path)

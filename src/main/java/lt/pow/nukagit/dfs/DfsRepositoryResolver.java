@@ -38,7 +38,10 @@ public class DfsRepositoryResolver {
     String repositoryName = args[1];
 
     if (!repositoryName.startsWith("/memory/")) {
-      var id = dfsDao.upsertRepositoryAndGetId(repositoryName);
+      var id = dfsDao.getRepositoryIdByName(repositoryName);
+      if (id == null) {
+        throw new IOException(String.format("Repository with the name %s does not exist!", repositoryName));
+      }
       return new NukagitDfsRepository.Builder(dfsDao, minio)
           .setRepositoryDescription(new NukagitDfsRepositoryDescription(id, repositoryName))
           // .withPath(new Path("testRepositories", name))

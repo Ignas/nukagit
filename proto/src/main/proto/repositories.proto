@@ -5,15 +5,20 @@ import "types.proto";
 package lt.pow.nukagit.proto;
 
 service RepositoriesService {
-  rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
-  }
+  rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {}
+  rpc CreateRepository (CreateRepositoryRequest) returns (CreateRepositoryResponse) {}
 }
 
-// The request message containing the user's name.
 message ListRepositoriesRequest {
 }
 
-// The response message containing the greetings
 message ListRepositoriesResponse {
   repeated Repository repositories = 1;
+}
+
+message CreateRepositoryRequest {
+  string repository_name = 1;
+}
+
+message CreateRepositoryResponse {
 }
