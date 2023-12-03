@@ -12,6 +12,7 @@ import lt.pow.nukagit.grpc.GrpcModule;
 import lt.pow.nukagit.lib.cli.CliCommand;
 import lt.pow.nukagit.minio.MinioModule;
 import lt.pow.nukagit.ssh.SshModule;
+import org.apache.sshd.server.SshServer;
 
 import java.util.Set;
 
@@ -29,4 +30,6 @@ import java.util.Set;
 @Singleton
 public interface MainComponent {
   Set<CliCommand> commands();
+
+  SshServer sshServer();
 }

@@ -8,11 +8,12 @@ import lt.pow.nukagit.dfs.DfsRepositoryResolver;
 import lt.pow.nukagit.dfs.GitDfsPackCommandFactory;
 import lt.pow.nukagit.lib.lifecycle.Managed;
 import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.auth.password.AcceptAllPasswordAuthenticator;
+import org.apache.sshd.server.auth.pubkey.AcceptAllPublickeyAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
 
+import javax.inject.Singleton;
 import java.nio.file.Path;
 
 @Module
@@ -32,6 +33,7 @@ public abstract class SshModule {
   abstract Managed bindServer(ManagedSshServer server);
 
   @Provides
+  @Singleton
   static SshServer createServer(
       DfsRepositoryResolver dfsRepositoryResolver, SshServerConfig sshServerConfig) {
     var sshServer = SshServer.setUpDefaultServer();
@@ -40,7 +42,11 @@ public abstract class SshModule {
     var keyPairGenerator = new SimpleGeneratorHostKeyProvider(Path.of(sshServerConfig.hostKey()));
     keyPairGenerator.setAlgorithm(sshServerConfig.hostKeyAlgorithm());
     sshServer.setKeyPairProvider(keyPairGenerator);
-    sshServer.setPasswordAuthenticator(AcceptAllPasswordAuthenticator.INSTANCE);
+    // sshServer.setPublickeyAuthenticator(new CachingPublicKeyAuthenticator(new KeySetPublickeyAuthenticator(
+    //        "PublicKeyAuthenticator",
+    //        ImmutableList.of()
+    // )));
+    sshServer.setPublickeyAuthenticator(AcceptAllPublickeyAuthenticator.INSTANCE);
     sshServer.setCommandFactory(
         new GitDfsPackCommandFactory().withDfsRepositoryResolver(dfsRepositoryResolver));
     return sshServer;

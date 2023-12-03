@@ -10,6 +10,8 @@ import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionService;
 import lt.pow.nukagit.lib.lifecycle.Managed;
 
+import javax.inject.Singleton;
+
 @Module
 public abstract class GrpcModule {
 
@@ -18,6 +20,7 @@ public abstract class GrpcModule {
   abstract Managed bindServer(ManagedGrpcServer server);
 
   @Provides
+  @Singleton
   static Server createGrpcServer(RepositoriesService repositoriesService) {
     HealthStatusManager healthStatusManager = new HealthStatusManager();
     return ServerBuilder.forPort(50051)
