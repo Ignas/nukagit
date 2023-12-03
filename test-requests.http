@@ -1,0 +1,5 @@
+GRPC grpc://localhost:50051/lt.pow.nukagit.proto.RepositoriesService/CreateRepository
+
+{
+  "repository_name": "testing"
+}
