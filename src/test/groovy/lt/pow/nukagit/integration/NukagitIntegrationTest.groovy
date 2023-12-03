@@ -27,7 +27,6 @@ import java.security.KeyPairGenerator
 
 @Testcontainers
 class NukagitIntegrationTest extends Specification {
-    @Shared
     MySQLContainer mysql = new MySQLContainer("mysql:8")
             .withDatabaseName("nukagit")
             .withUsername("nukagit")
@@ -43,18 +42,31 @@ class NukagitIntegrationTest extends Specification {
     SshClient sshClient
     KeyPair keyPair
     RepositoriesServiceGrpc.RepositoriesServiceBlockingStub grpcClient
+    int sshPort
+    int grpcPort
 
     @TempDir
     File testDir
 
+    def getRandomPort() {
+        ServerSocket serverSocket = new ServerSocket(0)
+        return serverSocket.localPort
+    }
+
     def setup() {
+        sshPort = getRandomPort()
+        grpcPort = getRandomPort()
+
         File testConfig = new File(testDir, "config.yaml")
         System.setProperty("nukagit.config_path", testConfig.absolutePath)
         testConfig << """
         ssh:
-          port: 2222
+          port: ${sshPort}
           hostname: localhost
           hostKey: ${testConfig.absolutePath}/ssh_host_key.pem
+
+        grpc:
+          port: ${grpcPort}
 
         database:
           jdbcUrl: jdbc:mysql://localhost:${mysql.getMappedPort(3306)}/nukagit
@@ -63,7 +75,7 @@ class NukagitIntegrationTest extends Specification {
           endpoint: http://localhost:${minio.getMappedPort(9000)}
         """
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", grpcPort)
                 .usePlaintext()
                 .build()
         grpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
@@ -96,7 +108,7 @@ class NukagitIntegrationTest extends Specification {
         grpcClient.createRepository(Repositories.CreateRepositoryRequest.newBuilder().setRepositoryName(path).build())
         var clonePath = new File(testDir, path.replace("/", "-"))
         CloneCommand cloneCommand = Git.cloneRepository()
-        cloneCommand.setURI("ssh://git@localhost:2222/" + path)
+        cloneCommand.setURI("ssh://git@localhost:${sshPort}/${path}")
         cloneCommand.setDirectory(clonePath)
         return cloneCommand.call()
     }

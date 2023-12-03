@@ -9,6 +9,8 @@ import io.grpc.ServerBuilder;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.grpc.protobuf.services.ProtoReflectionService;
 import lt.pow.nukagit.lib.lifecycle.Managed;
+import org.github.gestalt.config.Gestalt;
+import org.github.gestalt.config.exceptions.GestaltException;
 
 import javax.inject.Singleton;
 
@@ -20,10 +22,19 @@ public abstract class GrpcModule {
   abstract Managed bindServer(ManagedGrpcServer server);
 
   @Provides
+  static GrpcServerConfig configuration(Gestalt configurationProvider) {
+    try {
+      return configurationProvider.getConfig("grpc", GrpcServerConfig.class);
+    } catch (GestaltException e) {
+      throw new RuntimeException("GRPC Server configuration is missing!", e);
+    }
+  }
+
+  @Provides
   @Singleton
-  static Server createGrpcServer(RepositoriesService repositoriesService) {
+  static Server createGrpcServer(RepositoriesService repositoriesService, GrpcServerConfig config) {
     HealthStatusManager healthStatusManager = new HealthStatusManager();
-    return ServerBuilder.forPort(50051)
+    return ServerBuilder.forPort(config.port())
         .addService(repositoriesService)
         .addService(ProtoReflectionService.newInstance())
         .addService(healthStatusManager.getHealthService())
