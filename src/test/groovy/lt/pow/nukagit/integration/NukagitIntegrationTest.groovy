@@ -18,7 +18,6 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.spock.Testcontainers
 import org.testcontainers.utility.DockerImageName
-import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -50,6 +49,7 @@ class NukagitIntegrationTest extends Specification {
 
     def getRandomPort() {
         ServerSocket serverSocket = new ServerSocket(0)
+        serverSocket.close()
         return serverSocket.localPort
     }
 
