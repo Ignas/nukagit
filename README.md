@@ -40,7 +40,6 @@ To test an in-memory repository:
 ```shell
 git clone "ssh://git@localhost:2222/memory/test-repository"
 # Repository will be created automatically
-# You will be asked to enter a password, any password works
 # You will get a warning about connecting to a new ssh host, this is expected
 # a new ssh host key will be generated in keys/ssh_host_key.pem
 ```
