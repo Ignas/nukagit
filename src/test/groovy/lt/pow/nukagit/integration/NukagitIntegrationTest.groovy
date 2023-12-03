@@ -3,8 +3,7 @@ package lt.pow.nukagit.integration
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.minio.MakeBucketArgs
-import lt.pow.nukagit.DaggerMainComponent
-import lt.pow.nukagit.MainComponent
+import lt.pow.nukagit.DaggerTestComponent
 import lt.pow.nukagit.proto.Repositories
 import lt.pow.nukagit.proto.RepositoriesServiceGrpc
 import org.apache.sshd.client.SshClient
@@ -37,7 +36,7 @@ class NukagitIntegrationTest extends Specification {
             .withExposedPorts(9000)
             .withCommand("server /data --console-address :9001")
 
-    MainComponent component = DaggerMainComponent.create()
+    var component = DaggerTestComponent.create()
     SshClient sshClient
     KeyPair keyPair
     RepositoriesServiceGrpc.RepositoriesServiceBlockingStub grpcClient
