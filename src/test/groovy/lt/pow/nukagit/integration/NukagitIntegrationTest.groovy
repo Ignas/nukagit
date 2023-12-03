@@ -1,5 +1,6 @@
 package lt.pow.nukagit.integration
 
+import io.minio.MakeBucketArgs
 import lt.pow.nukagit.DaggerMainComponent
 import lt.pow.nukagit.MainComponent
 import org.apache.sshd.client.SshClient
@@ -27,7 +28,7 @@ class NukagitIntegrationTest extends Specification {
     MySQLContainer mysql = new MySQLContainer("mysql:8")
             .withDatabaseName("nukagit")
             .withUsername("nukagit")
-            .withPassword("nukagit")
+            .withPassword("password")
 
     GenericContainer minio = new GenericContainer(DockerImageName.parse("quay.io/minio/minio:latest"))
             .withEnv("MINIO_ROOT_USER", "minio99")
@@ -43,6 +44,25 @@ class NukagitIntegrationTest extends Specification {
     File testDir
 
     def setup() {
+        File testConfig = new File(testDir, "config.yaml")
+        System.setProperty("nukagit.config_path", testConfig.absolutePath)
+        testConfig << """
+        ssh:
+          port: 2222
+          hostname: localhost
+          hostKey: ${testConfig.absolutePath}/ssh_host_key.pem
+
+        database:
+          jdbcUrl: jdbc:mysql://localhost:${mysql.getMappedPort(3306)}/nukagit
+           
+        minio:
+          endpoint: http://localhost:${minio.getMappedPort(9000)}
+        """
+        component.minio().makeBucket(MakeBucketArgs.builder()
+            .bucket("nukagit")
+            .build())
+        component.migrateEntrypoint().run()
+
         component.sshServer().start()
 
         sshClient = SshClient.setUpDefaultClient()
@@ -72,9 +92,21 @@ class NukagitIntegrationTest extends Specification {
         return command.call()
     }
 
-    def "test clone empty and push"() {
+    def "test clone empty in-memory repo add file and push it back"() {
         given:
         var git = cloneRepository("memory/repo")
+        when:
+        var newFile = new File(git.repository.directory, "test.txt")
+        newFile.write("Test Content")
+        then:
+        git.add().addFilepattern(".").call()
+        git.commit().setAuthor("test", "test@example.com").setMessage("Test Change").call()
+        callGit(git.push())
+    }
+
+    def "test clone minio backed repo add file and push it back"() {
+        given:
+        var git = cloneRepository("minio/repo")
         when:
         var newFile = new File(git.repository.directory, "test.txt")
         newFile.write("Test Content")
