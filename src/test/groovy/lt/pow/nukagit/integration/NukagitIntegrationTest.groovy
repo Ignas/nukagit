@@ -11,11 +11,8 @@ import org.apache.sshd.client.SshClient
 import org.apache.sshd.git.transport.GitSshdSessionFactory
 import org.eclipse.jgit.api.CloneCommand
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.GitCommand
-import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.SshSessionFactory
-import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MySQLContainer
@@ -84,6 +81,9 @@ class NukagitIntegrationTest extends Specification {
         keyGen.initialize(2048)
         keyPair = keyGen.generateKeyPair()
         sshClient.addPublicKeyIdentity(keyPair)
+
+        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider("git", "git"))
+        SshSessionFactory.setInstance(new GitSshdSessionFactory(sshClient))
     }
 
     def cleanup() {
@@ -98,14 +98,7 @@ class NukagitIntegrationTest extends Specification {
         CloneCommand cloneCommand = Git.cloneRepository()
         cloneCommand.setURI("ssh://git@localhost:2222/" + path)
         cloneCommand.setDirectory(clonePath)
-        return callGit(cloneCommand)
-    }
-
-    <R> R callGit(TransportCommand<? extends GitCommand, R> command) {
-        command.setCredentialsProvider(new UsernamePasswordCredentialsProvider("git", "git"))
-                .setTransportConfigCallback {
-                    ((SshTransport) it).setSshSessionFactory(new GitSshdSessionFactory(sshClient))}
-        return command.call()
+        return cloneCommand.call()
     }
 
     def "test clone empty in-memory repo add file and push it back"() {
@@ -117,7 +110,7 @@ class NukagitIntegrationTest extends Specification {
         then:
         git.add().addFilepattern(".").call()
         git.commit().setAuthor("test", "test@example.com").setMessage("Test Change").call()
-        callGit(git.push())
+        git.push().call()
     }
 
     def "test clone minio backed repo add file and push it back"() {
@@ -129,6 +122,6 @@ class NukagitIntegrationTest extends Specification {
         then:
         git.add().addFilepattern(".").call()
         git.commit().setAuthor("test", "test@example.com").setMessage("Test Change").call()
-        callGit(git.push())
+        git.push().call()
     }
 }
