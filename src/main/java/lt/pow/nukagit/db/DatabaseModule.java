@@ -8,6 +8,7 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import lt.pow.nukagit.db.entities.Pack;
+import lt.pow.nukagit.db.entities.PublicKey;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
 import org.jdbi.v3.core.Jdbi;
@@ -42,6 +43,7 @@ public class DatabaseModule {
     jdbi.registerArgument(new UUIDArgumentFactory());
     JdbiImmutables jdbiImmutables = jdbi.getConfig(JdbiImmutables.class);
     jdbiImmutables.registerImmutable(Pack.class);
+    jdbiImmutables.registerImmutable(PublicKey.class);
     return jdbi;
   }
 
