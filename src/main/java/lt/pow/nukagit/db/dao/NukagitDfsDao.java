@@ -19,7 +19,7 @@ public interface NukagitDfsDao {
           + "ON DUPLICATE KEY UPDATE name = name")
   void upsertRepository(@Bind("name") String name);
 
-  @SqlQuery("SELECT id FROM repositories WHERE name = :name")
+  @SqlQuery("SELECT id FROM repositories WHERE name = :name AND not_archived = true")
   UUID getRepositoryIdByName(@Bind("name") String name);
 
   @SqlQuery("SELECT push_id FROM repositories WHERE id = :repositoryId")
