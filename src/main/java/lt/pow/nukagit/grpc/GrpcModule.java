@@ -17,27 +17,28 @@ import javax.inject.Singleton;
 @Module
 public abstract class GrpcModule {
 
-  @Binds
-  @IntoSet
-  abstract Managed bindServer(ManagedGrpcServer server);
+    @Binds
+    @IntoSet
+    abstract Managed bindServer(ManagedGrpcServer server);
 
-  @Provides
-  static GrpcServerConfig configuration(Gestalt configurationProvider) {
-    try {
-      return configurationProvider.getConfig("grpc", GrpcServerConfig.class);
-    } catch (GestaltException e) {
-      throw new RuntimeException("GRPC Server configuration is missing!", e);
+    @Provides
+    static GrpcServerConfig configuration(Gestalt configurationProvider) {
+        try {
+            return configurationProvider.getConfig("grpc", GrpcServerConfig.class);
+        } catch (GestaltException e) {
+            throw new RuntimeException("GRPC Server configuration is missing!", e);
+        }
     }
-  }
 
-  @Provides
-  @Singleton
-  static Server createGrpcServer(RepositoriesService repositoriesService, GrpcServerConfig config) {
-    HealthStatusManager healthStatusManager = new HealthStatusManager();
-    return ServerBuilder.forPort(config.port())
-        .addService(repositoriesService)
-        .addService(ProtoReflectionService.newInstance())
-        .addService(healthStatusManager.getHealthService())
-        .build();
-  }
+    @Provides
+    @Singleton
+    static Server createGrpcServer(RepositoriesService repositoriesService, UsersService usersService, GrpcServerConfig config) {
+        HealthStatusManager healthStatusManager = new HealthStatusManager();
+        return ServerBuilder.forPort(config.port())
+                .addService(repositoriesService)
+                .addService(usersService)
+                .addService(ProtoReflectionService.newInstance())
+                .addService(healthStatusManager.getHealthService())
+                .build();
+    }
 }
