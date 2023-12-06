@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "types.proto";
+
+package lt.pow.nukagit.proto;
+
+service UsersService {
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse) {}
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+}
+
+message ListUsersRequest {
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message CreateUserRequest {
+  string username = 1;
+  string public_key = 2;
+}
+
+message CreateUserResponse {
+}

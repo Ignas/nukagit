@@ -5,3 +5,7 @@ package lt.pow.nukagit.proto;
 message Repository {
   string name = 1;
 }
+
+message User {
+  string name = 1;
+}
