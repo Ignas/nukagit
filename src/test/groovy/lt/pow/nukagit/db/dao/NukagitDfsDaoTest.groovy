@@ -36,6 +36,16 @@ class NukagitDfsDaoTest extends DatabaseTestBase {
         repoId1 == repoId2
     }
 
+    def "if we archive repository we get a new id"() {
+        given:
+        def repoName = random.nextObject(String.class)
+        def repoId1 = dao.upsertRepositoryAndGetId(repoName)
+        dao.archiveRepository(repoId1)
+        def repoId2 = dao.upsertRepositoryAndGetId(repoName)
+        expect:
+        repoId1 != repoId2
+    }
+
     def "we can commit an empty set of packs"() {
         given:
         def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))

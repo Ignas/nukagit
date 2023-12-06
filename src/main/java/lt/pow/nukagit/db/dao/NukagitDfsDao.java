@@ -31,6 +31,9 @@ public interface NukagitDfsDao {
     return getRepositoryIdByName(name);
   }
 
+  @SqlUpdate("UPDATE repositories SET deleted_on = NOW() WHERE id = :repositoryId")
+  void archiveRepository(@Bind("repositoryId") UUID repositoryId);
+
   @SqlQuery(
       "SELECT * FROM packs WHERE push_id = (select push_id from repositories where id = :repositoryId)")
   List<Pack> listPacks(@Bind("repositoryId") UUID repositoryId);
