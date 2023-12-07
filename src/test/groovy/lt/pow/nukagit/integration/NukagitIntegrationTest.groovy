@@ -2,8 +2,6 @@ package lt.pow.nukagit.integration
 
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
-import io.grpc.health.v1.HealthCheckRequest
-import io.grpc.health.v1.HealthGrpc
 import io.minio.MakeBucketArgs
 import lt.pow.nukagit.DaggerTestComponent
 import lt.pow.nukagit.proto.Repositories
@@ -82,8 +80,8 @@ class NukagitIntegrationTest extends Specification {
         grpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
 
         component.minio().makeBucket(MakeBucketArgs.builder()
-            .bucket("nukagit")
-            .build())
+                .bucket("nukagit")
+                .build())
         component.migrateEntrypoint().run()
 
         component.sshServer().start()
