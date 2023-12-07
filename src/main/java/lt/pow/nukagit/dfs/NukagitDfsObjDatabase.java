@@ -311,7 +311,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
     }
   }
 
-  private static class MinioBlockReadableChannel implements ReadableChannel {
+  private static final class MinioBlockReadableChannel implements ReadableChannel {
     private final Logger LOGGER = LoggerFactory.getLogger(MinioBlockReadableChannel.class);
     private final MinioClient minio;
     private final PackExt ext;
