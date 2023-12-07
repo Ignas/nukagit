@@ -8,7 +8,7 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
 import lt.pow.nukagit.db.entities.Pack;
-import lt.pow.nukagit.db.entities.PublicKey;
+import lt.pow.nukagit.db.entities.UserPublicKey;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
 import org.jdbi.v3.core.Jdbi;
@@ -41,9 +41,11 @@ public class DatabaseModule {
   static Jdbi jdbi(DataSource dataSource) {
     var jdbi = Jdbi.create(dataSource).installPlugin(new SqlObjectPlugin());
     jdbi.registerArgument(new UUIDArgumentFactory());
+    jdbi.registerArgument(new BigIntegerArgumentFactory());
+    jdbi.registerColumnMapper(new BigIntegerColumnMapper());
     JdbiImmutables jdbiImmutables = jdbi.getConfig(JdbiImmutables.class);
     jdbiImmutables.registerImmutable(Pack.class);
-    jdbiImmutables.registerImmutable(PublicKey.class);
+    jdbiImmutables.registerImmutable(UserPublicKey.class);
     return jdbi;
   }
 

@@ -17,8 +17,9 @@ CREATE TABLE public_keys
 (
     id          CHAR(36) PRIMARY KEY,
     user_id     CHAR(36)  NOT NULL,
-    fingerprint CHAR(32)  NOT NULL,
-    public_key  TEXT      NOT NULL,
+    fingerprint CHAR(59)  NOT NULL,
+    modulus     VARBINARY(8000)    NOT NULL,
+    exponent    VARBINARY(8000)    NOT NULL,
     created_on  TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
     deleted_on  TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id)
