@@ -80,8 +80,8 @@ class NukagitIntegrationTest extends Specification {
         grpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
 
         component.minio().makeBucket(MakeBucketArgs.builder()
-            .bucket("nukagit")
-            .build())
+                .bucket("nukagit")
+                .build())
         component.migrateEntrypoint().run()
 
         component.sshServer().start()
