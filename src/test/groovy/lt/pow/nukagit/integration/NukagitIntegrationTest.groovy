@@ -80,7 +80,6 @@ class NukagitIntegrationTest extends Specification {
                 .usePlaintext()
                 .build()
         grpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
-        def healthGrpcClient = HealthGrpc.newBlockingStub(channel)
 
         component.minio().makeBucket(MakeBucketArgs.builder()
             .bucket("nukagit")
@@ -89,17 +88,6 @@ class NukagitIntegrationTest extends Specification {
 
         component.sshServer().start()
         component.grpcServer().start()
-
-        // Wait for grpc server to respond to a healthcheck
-        // by making 3 requests to it with 1 second delay
-        while (true) {
-            try {
-                healthGrpcClient.check(HealthCheckRequest.getDefaultInstance())
-                break
-            } catch (Exception e) {
-                Thread.sleep(1000)
-            }
-        }
 
         sshClient = SshClient.setUpDefaultClient()
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA")
