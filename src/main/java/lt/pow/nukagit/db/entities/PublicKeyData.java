@@ -13,20 +13,6 @@ public interface PublicKeyData {
 
     BigInteger exponent();
 
-    static PublicKeyData generateRandom() {
-        SecureRandom random = new SecureRandom();
-        var modulusBytes = new byte[128];
-        random.nextBytes(modulusBytes);
-
-        var exponentBytes = new byte[8];
-        random.nextBytes(exponentBytes);
-
-        return ImmutablePublicKeyData.builder()
-                .modulus(new BigInteger(modulusBytes).abs())
-                .exponent(new BigInteger(exponentBytes).abs())
-                .build();
-    }
-
     default PublicKey key() {
         RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus(), exponent());
         PublicKey key;

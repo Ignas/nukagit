@@ -19,7 +19,7 @@ class PublicKeyRepositoryDaoTest extends DatabaseTestBase {
         given:
         def username = random.nextObject(String.class)
         def publicKey = random.nextObject(String.class)
-        def keyData = PublicKeyData.generateRandom()
+        def keyData = repository.generateRandomPublicKeyData()
         publicKeyDecoder.decodePublicKey(publicKey) >> keyData
         when:
         repository.addUserWithKey(username, publicKey)
