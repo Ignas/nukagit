@@ -26,7 +26,13 @@ public class PublicKeyDecoder {
         String[] parts = keyLine.split(" ");
         for (String part : parts) {
             if (part.startsWith("AAAA")) {
-                byte[] decodeBuffer = Base64.getDecoder().decode(part.getBytes(StandardCharsets.UTF_8));
+                byte[] decodeBuffer;
+                try {
+                    decodeBuffer = Base64.getDecoder().decode(part.getBytes(StandardCharsets.UTF_8));
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidKeyStringException("Key string is not a valid base64 string", e);
+                }
+
                 ByteBuffer bb = ByteBuffer.wrap(decodeBuffer);
                 /* using 4 bytes from bb to generate integer which gives us length of key-
                 format type, in this case len=7 as "ssh-rsa" has 7 chars
