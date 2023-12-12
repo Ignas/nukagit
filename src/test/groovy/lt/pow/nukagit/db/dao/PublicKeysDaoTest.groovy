@@ -2,6 +2,7 @@ package lt.pow.nukagit.db.dao
 
 
 import lt.pow.nukagit.db.DatabaseTestBase
+import lt.pow.nukagit.db.entities.ImmutablePublicKeyData
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException
 import org.jeasy.random.EasyRandom
 import org.testcontainers.spock.Testcontainers
@@ -17,11 +18,16 @@ class PublicKeysDaoTest extends DatabaseTestBase {
 
     def "you can add a public key for a user"() {
         given:
-        def userId = usersDao.upsertUserAndGetId(random.nextObject(String.class))
+        def username = random.nextObject(String.class)
+        def userId = usersDao.upsertUserAndGetId(username)
+        def publicKey = random.nextObject(ImmutablePublicKeyData.class)
         when:
-        dao.addPublicKey(userId, random.nextObject(String.class), random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
+        dao.addPublicKey(userId, random.nextObject(String.class), publicKey)
         then:
         dao.listPublicKeys().size() == 1
+        def userKey = dao.listPublicKeys()[0]
+        userKey.username() == username
+        userKey.publicKeyData() == publicKey
         dao.listPublicKeysForUser(userId).size() == 1
     }
 
@@ -30,9 +36,9 @@ class PublicKeysDaoTest extends DatabaseTestBase {
         def userId1 = usersDao.upsertUserAndGetId(random.nextObject(String.class))
         def userId2 = usersDao.upsertUserAndGetId(random.nextObject(String.class))
         when:
-        dao.addPublicKey(userId1, random.nextObject(String.class), random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
-        dao.addPublicKey(userId1, random.nextObject(String.class), random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
-        dao.addPublicKey(userId2, random.nextObject(String.class), random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
+        dao.addPublicKey(userId1, random.nextObject(String.class), random.nextObject(ImmutablePublicKeyData.class))
+        dao.addPublicKey(userId1, random.nextObject(String.class), random.nextObject(ImmutablePublicKeyData.class))
+        dao.addPublicKey(userId2, random.nextObject(String.class), random.nextObject(ImmutablePublicKeyData.class))
         then:
         dao.listPublicKeys().size() == 3
     }
@@ -43,8 +49,8 @@ class PublicKeysDaoTest extends DatabaseTestBase {
         def userId2 = usersDao.upsertUserAndGetId(random.nextObject(String.class))
         def fingerprint = random.nextObject(String.class)
         when:
-        dao.addPublicKey(userId1, fingerprint, random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
-        dao.addPublicKey(userId2, fingerprint, random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
+        dao.addPublicKey(userId1, fingerprint, random.nextObject(ImmutablePublicKeyData.class))
+        dao.addPublicKey(userId2, fingerprint, random.nextObject(ImmutablePublicKeyData.class))
         then:
         thrown(UnableToExecuteStatementException)
     }
@@ -55,9 +61,9 @@ class PublicKeysDaoTest extends DatabaseTestBase {
         def userId2 = usersDao.upsertUserAndGetId(random.nextObject(String.class))
         def fingerprint = random.nextObject(String.class)
         when:
-        dao.addPublicKey(userId1, fingerprint, random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
+        dao.addPublicKey(userId1, fingerprint, random.nextObject(ImmutablePublicKeyData.class))
         dao.removePublicKeyByFingerprint(fingerprint)
-        dao.addPublicKey(userId2, fingerprint, random.nextObject(BigInteger.class), random.nextObject(BigInteger.class))
+        dao.addPublicKey(userId2, fingerprint, random.nextObject(ImmutablePublicKeyData.class))
         then:
         notThrown(UnableToExecuteStatementException)
     }

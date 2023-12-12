@@ -1,0 +1,6 @@
+- key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCVfM5Z/QFcA40d/PKrMIkuW9z3Mx13pnqWKyL4acpE6NIQ3FJklM7dCsDqAEv+l570Z5TDNqeZ3xeGtch2p6qbuQerAG+ztyctAZFQt2Qj1k1R+ulIJe5165irhY/+L13yxJeFYNx4TLQTMkDPPJL1qkwuzENwju0oPzCD8GGZQw==
+  fingerprint: da:67:7f:c9:55:d6:e0:0e:81:2c:20:cd:b2:b6:63:f6
+  myfingerprint: F2:65:2C:DD:90:7C:98:D8:E1:91:DF:00:A5:2B:46:0D:41:D4:A4:17
+- key: ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBE0Wi6suWaO7sdaTVNjyu3ApwA1KACCItX1R6WUPV01OOVH7080Jc/WD0KhMlEGxfF//8nZAzWTjJWymnQIo6lk=
+  fingerprint: 7a:2c:d0:4c:53:2f:4f:4e:be:51:cb:a1:2b:9e:39:34
+  myfingerprint: 90:EB:26:E7:3E:CC:0B:9C:97:86:FB:D3:C2:26:CC:3B:1C:FD:01:85

@@ -5,6 +5,8 @@ import org.yaml.snakeyaml.Yaml
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.security.spec.X509EncodedKeySpec
+
 class PublicKeyDecoderTest extends Specification {
     @Shared
     List<String> validKeys
@@ -23,7 +25,8 @@ class PublicKeyDecoderTest extends Specification {
 
     def "test valid keys"() {
         expect:
-        decoder.decodePublicKey(key) != null
+        decoder.decodePublicKey(key).key() != null
+        // def spec = new X509EncodedKeySpec(decoder.decodePublicKey(key).key().getEncoded());
         where:
         key << validKeys
     }

@@ -19,16 +19,15 @@ class PublicKeyRepositoryDaoTest extends DatabaseTestBase {
         given:
         def username = random.nextObject(String.class)
         def publicKey = random.nextObject(String.class)
-        def keyData = repository.generateRandomPublicKeyData()
-        publicKeyDecoder.decodePublicKey(publicKey) >> keyData
+        def testKeyData = repository.generateRandomPublicKeyData()
+        publicKeyDecoder.decodePublicKey(publicKey) >> testKeyData
         when:
         repository.addUserWithKey(username, publicKey)
         then:
         repository.publicKeyCollection.size() == 1
-        repository.publicKeyCollection[0].username() == username
-        repository.publicKeyCollection[0].fingerprint() == keyData.fingerprint()
-        repository.publicKeyCollection[0].modulus() == keyData.modulus()
-        repository.publicKeyCollection[0].exponent() == keyData.exponent()
+        def userKey = repository.publicKeyCollection[0]
+        userKey.username() == username
+        userKey.publicKeyData() == testKeyData
     }
 
     void setup() {

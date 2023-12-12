@@ -26,16 +26,17 @@ public class PublicKeyRepository {
 
     private final Supplier<List<UserPublicKey>> publicKeyCache;
 
+    static private BigInteger generateRandomBigInteger(int bitLength) {
+        var bytes = new byte[bitLength / 8];
+        random.nextBytes(bytes);
+        return new BigInteger(bytes).abs();
+    }
+
     static public PublicKeyData generateRandomPublicKeyData() {
-        var modulusBytes = new byte[128];
-        random.nextBytes(modulusBytes);
-
-        var exponentBytes = new byte[8];
-        random.nextBytes(exponentBytes);
-
         return ImmutablePublicKeyData.builder()
-                .modulus(new BigInteger(modulusBytes).abs())
-                .exponent(new BigInteger(exponentBytes).abs())
+                .keyType(PublicKeyData.KeyType.RSA)
+                .modulus(generateRandomBigInteger(1024))
+                .exponent(generateRandomBigInteger(64))
                 .build();
     }
 
@@ -63,7 +64,7 @@ public class PublicKeyRepository {
 
         // Create the user and add the public key
         var userId = usersDao.upsertUserAndGetId(username);
-        publicKeysDao.addPublicKey(userId, publicKeyData.fingerprint(), publicKeyData.exponent(), publicKeyData.modulus());
+        publicKeysDao.addPublicKey(userId, publicKeyData.fingerprint(), publicKeyData);
     }
 
     Collection<UserPublicKey> getPublicKeyCollection() {

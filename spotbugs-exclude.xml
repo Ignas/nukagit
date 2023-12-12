@@ -8,6 +8,9 @@
         <Class name="~.*\.Immutable.*"/>
     </Match>
     <Match>
+        <Class name="~.*\.Modifiable.*"/>
+    </Match>
+    <Match>
         <Source name="~.*\.groovy"/>
     </Match>
 </FindBugsFilter>
