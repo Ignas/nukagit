@@ -19,11 +19,7 @@ CREATE TABLE public_keys
     user_id     CHAR(36)   NOT NULL,
     fingerprint CHAR(59)   NOT NULL,
     key_type    VARCHAR(8) NOT NULL,
-    modulus     VARBINARY(8000),
-    exponent    VARBINARY(8000),
-    name        VARCHAR(255),
-    x           VARBINARY(8000),
-    y           VARBINARY(8000),
+    key_bytes   VARBINARY(4096) NOT NULL,
     created_on  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
     deleted_on  TIMESTAMP  NULL DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id)

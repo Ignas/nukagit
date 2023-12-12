@@ -20,8 +20,8 @@ public interface PublicKeysDao {
             " LEFT JOIN users AS u ON u.id = user_id" +
             " WHERE public_keys.not_archived = true AND user_id = :userId")
     List<UserPublicKey> listPublicKeysForUser(@Bind("userId") UUID userId);
-    @SqlUpdate("INSERT INTO public_keys (id, user_id, fingerprint, key_type, exponent, modulus, name, x, y)" +
-            " VALUES (UUID(), :userId, :fingerprint, :keyType, :exponent, :modulus, :name, :x, :y)")
+    @SqlUpdate("INSERT INTO public_keys (id, user_id, fingerprint, key_type, key_bytes)" +
+            " VALUES (UUID(), :userId, :fingerprint, :keyType, :keyBytes)")
     void addPublicKey(@Bind("userId") UUID userId, @Bind("fingerprint") String fingerprint, @BindMethods PublicKeyData publicKeyData);
 
     @SqlUpdate("UPDATE public_keys SET deleted_on = NOW() WHERE id = :id")

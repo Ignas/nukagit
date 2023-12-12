@@ -7,7 +7,11 @@ import javax.inject.Inject;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.spec.ECPoint;
+import java.security.AlgorithmParameters;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.*;
 import java.util.Base64;
 
 public class PublicKeyDecoder {
@@ -31,11 +35,18 @@ public class PublicKeyDecoder {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private ECPoint getECPoint(BigInteger q) {
-        byte[] qBytes = q.toByteArray();
-        if (qBytes[0] != 0x04) {
+    private ECPoint decodeECPoint(ByteBuffer bb) {
+        int len = bb.getInt();
+        var format = bb.get();
+
+        // validating that the key is uncompressed
+        if (format != 0x04) {
             throw new IllegalArgumentException("Only uncompressed points are supported");
         }
+
+        byte[] qBytes = new byte[len - 1];
+        bb.get(qBytes);
+
         byte[] xBytes = new byte[qBytes.length / 2];
         byte[] yBytes = new byte[qBytes.length / 2];
         System.arraycopy(qBytes, 0, xBytes, 0, xBytes.length);
@@ -45,6 +56,9 @@ public class PublicKeyDecoder {
 
     public PublicKeyData decodePublicKey(String keyLine) throws InvalidKeyStringException {
         String[] parts = keyLine.split(" ");
+        PublicKey key;
+        PublicKeyData.KeyType keyType;
+
         for (String part : parts) {
             if (part.startsWith("AAAA")) {
                 byte[] decodeBuffer;
@@ -57,34 +71,47 @@ public class PublicKeyDecoder {
                 ByteBuffer bb = ByteBuffer.wrap(decodeBuffer);
                 String typeString = decodeString(bb);
                 if ("ssh-rsa".equals(typeString)) {
+                    keyType = PublicKeyData.KeyType.RSA;
                     // extracting exponent and modulus from remaining byte-buffer
                     BigInteger exponent = decodeBigInt(bb);
                     BigInteger modulus = decodeBigInt(bb);
-                    PublicKeyData keyData = ImmutablePublicKeyData.builder()
-                            .keyType(PublicKeyData.KeyType.RSA)
-                            .modulus(modulus)
-                            .exponent(exponent).build();
-                    // Make sure a key can be constructed from the data
-                    keyData.key();
-                    return keyData;
+
+                    RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
+                    try {
+                        // Generate public key
+                        key = KeyFactory.getInstance("RSA").generatePublic(spec);
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                        throw new InvalidKeyStringException("Failed to construct a valid RSA key", e);
+                    }
                 } else if (typeString.startsWith("ecdsa-sha2-")) {
+                    keyType = PublicKeyData.KeyType.EC;
                     // extracting curve name from remaining byte-buffer
                     String nistNameString = decodeString(bb);
                     String nameString = nistNameString.replace("nist", "sec") + "r1";
-                    // extracting q from remaining byte-buffer
-                    BigInteger q = decodeBigInt(bb);
-                    PublicKeyData keyData = ImmutablePublicKeyData.builder()
-                            .keyType(PublicKeyData.KeyType.ECDSA)
-                            .name(nameString)
-                            .x(getECPoint(q).getAffineX())
-                            .y(getECPoint(q).getAffineY())
-                            .build();
-                    // Make sure a key can be constructed from the data
-                    keyData.key();
-                    return keyData;
+
+                    // Generate ECPoint
+                    ECPoint ecPoint = decodeECPoint(bb);
+
+                    try {
+                        // Generate ECParameterSpec
+                        AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
+                        parameters.init(new ECGenParameterSpec(nameString));
+                        ECParameterSpec ecParameterSpec = parameters.getParameterSpec(ECParameterSpec.class);
+                        // Generate ECPublicKeySpec
+                        ECPublicKeySpec spec = new ECPublicKeySpec(ecPoint, ecParameterSpec);
+                        // Generate public key
+                        key = KeyFactory.getInstance("EC").generatePublic(spec);
+                    } catch (InvalidParameterSpecException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+                        throw new InvalidKeyStringException("Failed to construct a valid ECDSA key", e);
+                    }
+
                 } else {
                     throw new InvalidPublicKeyTypeException(String.format("Only supports RSA and ECDSA keys, received %s key", typeString));
                 }
+                return ImmutablePublicKeyData.builder()
+                        .keyType(keyType)
+                        .keyBytes(key.getEncoded())
+                        .build();
             }
         }
         throw new InvalidKeyStringException("Key string missing the actual key");

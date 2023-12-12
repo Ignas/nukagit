@@ -3,12 +3,9 @@ package lt.pow.nukagit.db.repositories;
 import com.google.common.base.Suppliers;
 import lt.pow.nukagit.db.dao.PublicKeysDao;
 import lt.pow.nukagit.db.dao.UsersDao;
-import lt.pow.nukagit.db.entities.ImmutablePublicKeyData;
-import lt.pow.nukagit.db.entities.PublicKeyData;
 import lt.pow.nukagit.db.entities.UserPublicKey;
 
 import javax.inject.Inject;
-import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.List;
@@ -25,20 +22,6 @@ public class PublicKeyRepository {
     private final PublicKeyDecoder publicKeyDecoder;
 
     private final Supplier<List<UserPublicKey>> publicKeyCache;
-
-    static private BigInteger generateRandomBigInteger(int bitLength) {
-        var bytes = new byte[bitLength / 8];
-        random.nextBytes(bytes);
-        return new BigInteger(bytes).abs();
-    }
-
-    static public PublicKeyData generateRandomPublicKeyData() {
-        return ImmutablePublicKeyData.builder()
-                .keyType(PublicKeyData.KeyType.RSA)
-                .modulus(generateRandomBigInteger(1024))
-                .exponent(generateRandomBigInteger(64))
-                .build();
-    }
 
     @Inject
     public PublicKeyRepository(UsersDao usersDao, PublicKeysDao publicKeysDao, UsernameValidator usernameValidator, PublicKeyDecoder publicKeyDecoder) {

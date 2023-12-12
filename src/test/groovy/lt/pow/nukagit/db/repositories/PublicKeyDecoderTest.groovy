@@ -26,7 +26,6 @@ class PublicKeyDecoderTest extends Specification {
     def "test valid keys"() {
         expect:
         decoder.decodePublicKey(key).key() != null
-        // def spec = new X509EncodedKeySpec(decoder.decodePublicKey(key).key().getEncoded());
         where:
         key << validKeys
     }
