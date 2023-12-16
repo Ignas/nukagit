@@ -37,8 +37,9 @@ class PublicKeyRepositoryDaoTest extends DatabaseTestBase {
         when:
         repository.addUserWithKey(username, publicKey)
         then:
-        repository.publicKeyCollection.size() == 1
-        def userKey = repository.publicKeyCollection[0]
+        def keyList = repository.publicKeySupplier.get()
+        keyList.size() == 1
+        def userKey = keyList[0]
         userKey.username() == username
         userKey.publicKeyData() == testKeyData
     }

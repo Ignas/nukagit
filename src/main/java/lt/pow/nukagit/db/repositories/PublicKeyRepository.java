@@ -6,8 +6,6 @@ import lt.pow.nukagit.db.dao.UsersDao;
 import lt.pow.nukagit.db.entities.UserPublicKey;
 
 import javax.inject.Inject;
-import java.security.SecureRandom;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -48,7 +46,7 @@ public class PublicKeyRepository {
         publicKeysDao.addPublicKey(userId, publicKeyData.fingerprint(), publicKeyData);
     }
 
-    public Collection<UserPublicKey> getPublicKeyCollection() {
-        return publicKeyCache.get();
+    public Supplier<List<UserPublicKey>> getPublicKeySupplier() {
+        return publicKeyCache;
     }
 }
