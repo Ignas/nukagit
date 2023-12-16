@@ -13,22 +13,25 @@ import javax.inject.Singleton;
 
 @Singleton
 public class UsersService extends UsersServiceGrpc.UsersServiceImplBase {
-
     private final PublicKeyRepository publicKeyRepository;
+
     @Inject
     public UsersService(PublicKeyRepository publicKeyRepository) {
         this.publicKeyRepository = publicKeyRepository;
     }
 
-    @Override
-    public void createUser(Users.CreateUserRequest request, StreamObserver<Users.CreateUserResponse> responseObserver) {
+    public Users.CreateUserResponse createUser(Users.CreateUserRequest request) {
         var response = Users.CreateUserResponse.newBuilder().build();
         try {
             publicKeyRepository.addUserWithKey(request.getUsername(), request.getPublicKey());
         } catch (InvalidKeyStringException | InvalidUsernameException e) {
-            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException());
+            throw Status.INVALID_ARGUMENT.withDescription(e.getMessage()).asRuntimeException();
         }
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+        return response;
+    }
+
+    @Override
+    public void createUser(Users.CreateUserRequest request, StreamObserver<Users.CreateUserResponse> responseObserver) {
+        GrpcHelpers.unaryCall(request, responseObserver, this::createUser);
     }
 }
