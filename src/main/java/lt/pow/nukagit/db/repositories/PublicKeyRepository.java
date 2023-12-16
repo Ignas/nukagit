@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class PublicKeyRepository {
-    static SecureRandom random = new SecureRandom();
-
     private final UsersDao usersDao;
     private final PublicKeysDao publicKeysDao;
     private final UsernameValidator usernameValidator;
@@ -36,7 +34,7 @@ public class PublicKeyRepository {
         this.publicKeyDecoder = publicKeyDecoder;
     }
 
-    void addUserWithKey(String username, String publicKey) throws InvalidKeyStringException, InvalidUsernameException {
+    public void addUserWithKey(String username, String publicKey) throws InvalidKeyStringException, InvalidUsernameException {
         // Validate that username is valid
         if (!usernameValidator.isValid(username)) {
             throw new InvalidUsernameException(String.format("Username %s is not considered valid", username));
@@ -50,7 +48,7 @@ public class PublicKeyRepository {
         publicKeysDao.addPublicKey(userId, publicKeyData.fingerprint(), publicKeyData);
     }
 
-    Collection<UserPublicKey> getPublicKeyCollection() {
+    public Collection<UserPublicKey> getPublicKeyCollection() {
         return publicKeyCache.get();
     }
 }

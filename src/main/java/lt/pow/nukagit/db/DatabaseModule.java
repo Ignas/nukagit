@@ -7,6 +7,8 @@ import dagger.Provides;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.dao.PublicKeysDao;
+import lt.pow.nukagit.db.dao.UsersDao;
 import lt.pow.nukagit.db.entities.Pack;
 import lt.pow.nukagit.db.entities.PublicKeyData;
 import lt.pow.nukagit.db.entities.UserPublicKey;
@@ -57,4 +59,17 @@ public class DatabaseModule {
   NukagitDfsDao dfsDao(Jdbi jdbi) {
     return jdbi.onDemand(NukagitDfsDao.class);
   }
+
+  @Provides
+  @Singleton
+  UsersDao usersDao(Jdbi jdbi) {
+    return jdbi.onDemand(UsersDao.class);
+  }
+
+  @Provides
+  @Singleton
+  PublicKeysDao publicKeysDao(Jdbi jdbi) {
+    return jdbi.onDemand(PublicKeysDao.class);
+  }
+
 }
