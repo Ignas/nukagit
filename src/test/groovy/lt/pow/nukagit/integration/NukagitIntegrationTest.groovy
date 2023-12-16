@@ -1,13 +1,19 @@
 package lt.pow.nukagit.integration
 
+
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.minio.MakeBucketArgs
 import lt.pow.nukagit.DaggerTestComponent
 import lt.pow.nukagit.proto.Repositories
 import lt.pow.nukagit.proto.RepositoriesServiceGrpc
+import lt.pow.nukagit.proto.Users
+import lt.pow.nukagit.proto.UsersServiceGrpc
 import org.apache.sshd.client.SshClient
 import org.apache.sshd.git.transport.GitSshdSessionFactory
+import org.bouncycastle.openssl.PEMKeyPair
+import org.bouncycastle.openssl.PEMParser
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.eclipse.jgit.api.CloneCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.CredentialsProvider
@@ -21,7 +27,6 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 import java.security.KeyPair
-import java.security.KeyPairGenerator
 
 @Testcontainers
 class NukagitIntegrationTest extends Specification {
@@ -39,7 +44,8 @@ class NukagitIntegrationTest extends Specification {
     var component = DaggerTestComponent.create()
     SshClient sshClient
     KeyPair keyPair
-    RepositoriesServiceGrpc.RepositoriesServiceBlockingStub grpcClient
+    RepositoriesServiceGrpc.RepositoriesServiceBlockingStub repositoriesGrpcClient
+    UsersServiceGrpc.UsersServiceBlockingStub usersGrpcClient
     int sshPort
     int grpcPort
 
@@ -77,7 +83,8 @@ class NukagitIntegrationTest extends Specification {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", grpcPort)
                 .usePlaintext()
                 .build()
-        grpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
+        repositoriesGrpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
+        usersGrpcClient = UsersServiceGrpc.newBlockingStub(channel)
 
         component.minio().makeBucket(MakeBucketArgs.builder()
                 .bucket("nukagit")
@@ -88,13 +95,29 @@ class NukagitIntegrationTest extends Specification {
         component.grpcServer().start()
 
         sshClient = SshClient.setUpDefaultClient()
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA")
-        keyGen.initialize(2048)
-        keyPair = keyGen.generateKeyPair()
+
+        keyPair = loadKeyPair('/fixtures/id_ecdsa')
         sshClient.addPublicKeyIdentity(keyPair)
+
+        usersGrpcClient.createUser(Users.CreateUserRequest.newBuilder()
+                .setUsername("user")
+                .setPublicKey(loadPublicKeyString('/fixtures/id_ecdsa.pub'))
+                .build())
 
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider("git", "git"))
         SshSessionFactory.setInstance(new GitSshdSessionFactory(sshClient))
+    }
+
+    private String loadPublicKeyString(String path) {
+        new File(getClass().getResource(path).toURI()).text
+    }
+
+    def loadKeyPair(String path) {
+        def idRsaPem = new File(getClass().getResource(path).toURI())
+        def pemParser = new PEMParser(new FileReader(idRsaPem))
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter()
+        PEMKeyPair pemKeyPair = pemParser.readObject() as PEMKeyPair
+        return converter.getKeyPair(pemKeyPair)
     }
 
     def cleanup() {
@@ -104,7 +127,7 @@ class NukagitIntegrationTest extends Specification {
     }
 
     def cloneRepository(String path) {
-        grpcClient.createRepository(Repositories.CreateRepositoryRequest.newBuilder().setRepositoryName(path).build())
+        repositoriesGrpcClient.createRepository(Repositories.CreateRepositoryRequest.newBuilder().setRepositoryName(path).build())
         var clonePath = new File(testDir, path.replace("/", "-"))
         CloneCommand cloneCommand = Git.cloneRepository()
         cloneCommand.setURI("ssh://git@localhost:${sshPort}/${path}")
