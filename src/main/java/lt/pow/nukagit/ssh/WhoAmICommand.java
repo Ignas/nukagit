@@ -14,7 +14,7 @@ public class WhoAmICommand extends AbstractCommandSupport {
     public void run() {
         String username = (String) this.getServerSession().getIoSession().getAttribute("username");
         try {
-            this.getOutputStream().write(String.format("You are: %s%n", username).getBytes(StandardCharsets.UTF_8));
+            this.getOutputStream().write(String.format("You are: %s\n", username).getBytes(StandardCharsets.UTF_8));
             onExit(0);
         } catch (IOException e) {
             onExit(1);
