@@ -21,10 +21,14 @@ public class NukagitBlockRepository {
 
     private final MinioClient minio;
     private final LoadingCache<String, byte[]> blockCache;
+    private final Integer blockSize;
+    private String bucketName;
 
     @Inject
-    public NukagitBlockRepository(MinioClient minio) {
+    public NukagitBlockRepository(MinioClient minio, MinioConfiguration minioConfiguration) {
         this.minio = minio;
+        this.blockSize = minioConfiguration.getBlockSize();
+        this.bucketName = minioConfiguration.getBucket();
         this.blockCache = CacheBuilder.newBuilder()
                 .maximumSize(100)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
@@ -35,7 +39,7 @@ public class NukagitBlockRepository {
         try {
             try {
                 return minio
-                        .getObject(GetObjectArgs.builder().bucket("nukagit").object(key).build())
+                        .getObject(GetObjectArgs.builder().bucket(this.bucketName).object(key).build())
                         .readAllBytes();
             } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
                 throw new IOException(e);
@@ -63,7 +67,7 @@ public class NukagitBlockRepository {
         try {
             minio.putObject(
                     PutObjectArgs.builder()
-                            .bucket("nukagit")
+                            .bucket(this.bucketName)
                             .object(getBlockKey(repositoryId, blockNumber, fileName))
                             .stream(new ByteArrayInputStream(buffer, 0, length), length, -1)
                             .contentType("application/octet-stream")
@@ -85,6 +89,6 @@ public class NukagitBlockRepository {
     }
 
     public int getBlockSize() {
-        return 1024 * 1024;
+        return blockSize;
     }
 }

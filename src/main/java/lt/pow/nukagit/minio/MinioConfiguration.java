@@ -1,11 +1,13 @@
 package lt.pow.nukagit.minio;
 
 public interface MinioConfiguration {
-  String getAccessKey();
+    String getAccessKey();
 
-  String getSecretKey();
+    String getSecretKey();
 
-  String getEndpoint();
+    String getEndpoint();
 
-  String getBucket();
+    String getBucket();
+
+    Integer getBlockSize();
 }
