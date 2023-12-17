@@ -19,36 +19,39 @@ import java.nio.file.Path;
 @Module
 public abstract class SshModule {
 
-  @Provides
-  static SshServerConfig configuration(Gestalt configurationProvider) {
-    try {
-      return configurationProvider.getConfig("ssh", SshServerConfig.class);
-    } catch (GestaltException e) {
-      throw new RuntimeException("SSH Server configuration is missing!", e);
+    @Provides
+    static SshServerConfig configuration(Gestalt configurationProvider) {
+        try {
+            return configurationProvider.getConfig("ssh", SshServerConfig.class);
+        } catch (GestaltException e) {
+            throw new RuntimeException("SSH Server configuration is missing!", e);
+        }
     }
-  }
 
-  @Binds
-  @IntoSet
-  abstract Managed bindServer(ManagedSshServer server);
+    @Binds
+    @IntoSet
+    abstract Managed bindServer(ManagedSshServer server);
 
-  @Provides
-  @Singleton
-  static SshServer createServer(
-          DfsRepositoryResolver dfsRepositoryResolver,
-          SshServerConfig sshServerConfig,
-          PublicKeyRepository publicKeyRepository) {
-    var sshServer = SshServer.setUpDefaultServer();
-    sshServer.setHost(sshServerConfig.hostname());
-    sshServer.setPort(sshServerConfig.port());
-    var keyPairGenerator = new SimpleGeneratorHostKeyProvider(Path.of(sshServerConfig.hostKey()));
-    keyPairGenerator.setAlgorithm(sshServerConfig.hostKeyAlgorithm());
-    sshServer.setKeyPairProvider(keyPairGenerator);
-    sshServer.setPublickeyAuthenticator(new UsernameResolvingPublickeyAuthenticator(
-          publicKeyRepository.getPublicKeySupplier()
-    ));
-    sshServer.setCommandFactory(
-        new GitDfsPackCommandFactory().withDfsRepositoryResolver(dfsRepositoryResolver));
-    return sshServer;
-  }
+    @Provides
+    @Singleton
+    static SshServer createServer(
+            DfsRepositoryResolver dfsRepositoryResolver,
+            SshServerConfig sshServerConfig,
+            PublicKeyRepository publicKeyRepository) {
+        var sshServer = SshServer.setUpDefaultServer();
+        sshServer.setHost(sshServerConfig.hostname());
+        sshServer.setPort(sshServerConfig.port());
+        var keyPairGenerator = new SimpleGeneratorHostKeyProvider(Path.of(sshServerConfig.hostKey()));
+        keyPairGenerator.setAlgorithm(sshServerConfig.hostKeyAlgorithm());
+        sshServer.setKeyPairProvider(keyPairGenerator);
+        sshServer.setPublickeyAuthenticator(new UsernameResolvingPublickeyAuthenticator(
+                publicKeyRepository.getPublicKeySupplier()
+        ));
+        sshServer.setCommandFactory(
+                new GitDfsPackCommandFactory()
+                        .withDfsRepositoryResolver(dfsRepositoryResolver)
+                        .withDelegate(new NukagitCliCommandFactory())
+        );
+        return sshServer;
+    }
 }
