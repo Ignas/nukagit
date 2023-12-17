@@ -89,11 +89,11 @@ class NukagitIntegrationTest extends Specification {
           endpoint: http://localhost:${minio.getMappedPort(9000)}
         """
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", grpcPort)
+        grpcChannel = ManagedChannelBuilder.forAddress("localhost", grpcPort)
                 .usePlaintext()
                 .build()
-        repositoriesGrpcClient = RepositoriesServiceGrpc.newBlockingStub(channel)
-        usersGrpcClient = UsersServiceGrpc.newBlockingStub(channel)
+        repositoriesGrpcClient = RepositoriesServiceGrpc.newBlockingStub(grpcChannel)
+        usersGrpcClient = UsersServiceGrpc.newBlockingStub(grpcChannel)
 
         component.minio().makeBucket(MakeBucketArgs.builder()
                 .bucket("nukagit")
