@@ -50,8 +50,11 @@ class NukagitIntegrationTest extends Specification {
     var component = DaggerTestComponent.create()
     SshClient sshClient
     KeyPair keyPair
+
+    ManagedChannel grpcChannel
     RepositoriesServiceGrpc.RepositoriesServiceBlockingStub repositoriesGrpcClient
     UsersServiceGrpc.UsersServiceBlockingStub usersGrpcClient
+
     int sshPort
     int grpcPort
 
@@ -129,6 +132,8 @@ class NukagitIntegrationTest extends Specification {
 
     def cleanup() {
         sshClient.stop()
+        grpcChannel.shutdownNow()
+        grpcChannel.awaitTermination(1, TimeUnit.SECONDS)
         component.grpcServer().shutdownNow()
         component.grpcServer().awaitTermination(1, TimeUnit.SECONDS)
         component.sshServer().stop()
