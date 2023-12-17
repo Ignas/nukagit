@@ -34,8 +34,10 @@ public class GitDfsPackCommand extends GitPackCommand {
     @WithSpan
     public void run() {
         String username = (String) getServerSession().getIoSession().getAttribute("username");
-        String command = getCommand();
         MDC.put("username", username);
+        NukagitDfsRepository.USERNAME.set(username);
+
+        String command = getCommand();
         try {
             var args = extractQuotedStrings(command);
 
@@ -65,6 +67,7 @@ public class GitDfsPackCommand extends GitPackCommand {
             MDC.remove("command");
             MDC.remove("git.repository");
             MDC.remove("git.command");
+            NukagitDfsRepository.USERNAME.remove();
         }
     }
 

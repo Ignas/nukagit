@@ -2,7 +2,7 @@
 <FindBugsFilter>
     <Match>
         <Class name="~.*"/>
-        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,VA_FORMAT_STRING_USES_NEWLINE"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,VA_FORMAT_STRING_USES_NEWLINE,CT_CONSTRUCTOR_THROW"/>
     </Match>
     <Match>
         <Class name="~.*\.Immutable.*"/>
