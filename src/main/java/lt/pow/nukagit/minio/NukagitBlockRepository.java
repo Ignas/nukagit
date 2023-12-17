@@ -22,7 +22,7 @@ public class NukagitBlockRepository {
     private final MinioClient minio;
     private final LoadingCache<String, byte[]> blockCache;
     private final Integer blockSize;
-    private String bucketName;
+    private final String bucketName;
 
     @Inject
     public NukagitBlockRepository(MinioClient minio, MinioConfiguration minioConfiguration) {
