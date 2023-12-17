@@ -68,6 +68,9 @@ public class NukagitBlockRepository {
                             .stream(new ByteArrayInputStream(buffer, 0, length), length, -1)
                             .contentType("application/octet-stream")
                             .build());
+            byte[] truncatedBuffer = new byte[length];
+            System.arraycopy(buffer, 0, truncatedBuffer, 0, length);
+            blockCache.put(getBlockKey(repositoryId, blockNumber, fileName), truncatedBuffer);
         } catch (MinioException | InvalidKeyException | NoSuchAlgorithmException e) {
             throw new IOException(e);
         }
