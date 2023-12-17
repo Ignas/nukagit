@@ -129,7 +129,8 @@ class NukagitIntegrationTest extends Specification {
 
     def cleanup() {
         sshClient.stop()
-        component.grpcServer().shutdown()
+        component.grpcServer().shutdownNow()
+        component.grpcServer().awaitTermination(1, TimeUnit.SECONDS)
         component.sshServer().stop()
     }
 
