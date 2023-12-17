@@ -27,8 +27,6 @@ public class NukagitDfsRepository extends DfsRepository {
         this.readerOptions = builder.getReaderOptions();
         this.dfsDao = builder.getDfsDao();
         this.blockRepository = builder.getBlockRepository();
-        // Should I create these whenever they are retrieved?
-        // TODO: Test different block sizes
         objDb = new NukagitDfsObjDatabase(this, dfsDao, blockRepository, this.readerOptions, blockRepository.getBlockSize());
         refDb = new RefDatabase(this);
     }
