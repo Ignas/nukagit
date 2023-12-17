@@ -100,7 +100,7 @@ public class GitDfsPackCommand extends GitPackCommand {
                     insideQuotes = true;
                 } else if (!Character.isWhitespace(c)) {
                     currentString.append(c);
-                } else if (currentString.length() > 0) {
+                } else if (!currentString.isEmpty()) {
                     splitStrings.add(currentString.toString());
                     currentString.setLength(0);
                 }
@@ -118,7 +118,7 @@ public class GitDfsPackCommand extends GitPackCommand {
             }
         }
 
-        if (currentString.length() > 0) {
+        if (!currentString.isEmpty()) {
             splitStrings.add(currentString.toString());
         }
 
