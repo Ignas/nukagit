@@ -4,6 +4,7 @@ plugins {
     id 'groovy'
     id 'com.github.spotbugs'
     id 'idea'
+    id 'maven-publish'
     id 'com.ryandens.javaagent-application' version "0.4.2"
 }
 
@@ -127,5 +128,23 @@ test {
         environment("DOCKER_HOST", "unix://${colimaSocketFilename}")
         environment("TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE", "/var/run/docker.sock")
         environment("TESTCONTAINERS_RYUK_DISABLED", "true")
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/Ignas/nukagit"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
