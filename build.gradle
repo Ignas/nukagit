@@ -8,8 +8,11 @@ plugins {
     id 'com.ryandens.javaagent-application' version "0.4.2"
 }
 
+def rawVersion = project.hasProperty('version') ? project.version : '0.1.0-SNAPSHOT'
+def versionWithoutPrefix = rawVersion.replaceAll('^v', '')
+
 group = 'lt.pow.nukagit'
-version = '0.1-SNAPSHOT'
+version = versionWithoutPrefix
 mainClassName = 'lt.pow.nukagit.Main'
 
 repositories {
