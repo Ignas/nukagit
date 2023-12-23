@@ -8,7 +8,8 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name = "nuka_cli", description = "NukaGit CLI client",
         subcommands = {
-                AddUser.class
+                AddUser.class,
+                CreateRepository.class,
         })
 public class Main implements Runnable {
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message")

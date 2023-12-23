@@ -46,7 +46,7 @@ public class AddUser implements Runnable {
             keyString = new String(keyBytes, StandardCharsets.UTF_8);
         }
 
-        System.out.println("Adding User " + username + " with key " + keyString);
+        System.out.println("Adding User " + username);
         parent.usersGrpcClient().createUser(Users.CreateUserRequest.newBuilder()
                 .setUsername(username)
                 .setPublicKey(keyString)
