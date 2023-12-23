@@ -3,7 +3,7 @@ plugins {
 }
 
 rootProject.name = 'nukagit'
-include 'proto'
+include 'proto', 'cli'
 
 refreshVersions {
     rejectVersionIf {

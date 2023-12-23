@@ -1,0 +1,31 @@
+plugins {
+    id 'application'
+    id 'java'
+    id 'com.github.spotbugs'
+    id 'idea'
+}
+
+group = 'lt.pow.nukagit'
+version = '0.1.0-SNAPSHOT'
+mainClassName = 'lt.pow.nukagit.cli.Main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":proto")
+    implementation 'com.google.protobuf:protobuf-java:_'
+    implementation 'io.grpc:grpc-stub:_'
+    implementation 'io.grpc:grpc-protobuf:_'
+    implementation 'javax.annotation:javax.annotation-api:_'
+    implementation 'io.grpc:grpc-netty:_'
+
+    // Command line parsing
+    implementation 'info.picocli:picocli:_'
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
