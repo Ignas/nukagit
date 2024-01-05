@@ -78,7 +78,9 @@ public class GitDfsPackCommand extends GitPackCommand {
 
     @WithSpan
     private void uploadPack(Repository db) throws IOException {
-        new UploadPack(db).upload(getInputStream(), getOutputStream(), getErrorStream());
+        try(var uploadOperation = new UploadPack(db)) {
+            uploadOperation.upload(getInputStream(), getOutputStream(), getErrorStream());
+        }
     }
 
     @VisibleForTesting
