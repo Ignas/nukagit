@@ -61,6 +61,7 @@ public class Main implements Runnable {
 
     public static void main(String[] args) {
         CommandLine commandLine = new CommandLine(new Main());
-        commandLine.execute(args);
+        int exitCode = commandLine.execute(args);
+        System.exit(exitCode);
     }
 }
