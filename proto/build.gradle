@@ -25,11 +25,11 @@ java {
 protobuf {
     protoc {
         // The artifact spec for the Protobuf Compiler
-        artifact = 'com.google.protobuf:protoc:3.6.1'
+        artifact = 'com.google.protobuf:protoc:3.25.1'
     }
     plugins {
         grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.15.1'
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.59.1'
         }
     }
     generateProtoTasks {
