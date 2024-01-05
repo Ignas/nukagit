@@ -7,9 +7,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "add_user", description = "Add user")
-public class AddUser implements Runnable {
+public class AddUser implements Callable<Integer> {
 
     @CommandLine.ParentCommand
     private Main parent;
@@ -24,13 +25,13 @@ public class AddUser implements Runnable {
     private File keyFile;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (keyString != null && keyFile != null) {
             System.err.println("Cannot specify both --key and --key-file");
-            System.exit(1);
+            return 1;
         } else if (keyString == null && keyFile == null) {
             System.err.println("Must specify either --key or --key-file");
-            System.exit(1);
+            return 1;
         }
 
         if (keyFile != null) {
@@ -40,8 +41,7 @@ public class AddUser implements Runnable {
                 keyBytes = Files.readAllBytes(keyFile.toPath());
             } catch (IOException e) {
                 System.err.println("Failed to read key file: " + e.getMessage());
-                System.exit(1);
-                return;
+                return 1;
             }
             keyString = new String(keyBytes, StandardCharsets.UTF_8);
         }
@@ -52,5 +52,6 @@ public class AddUser implements Runnable {
                 .setPublicKey(keyString)
                 .build());
         System.out.println("User added");
+        return 0;
     }
 }
