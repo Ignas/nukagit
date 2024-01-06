@@ -14,17 +14,21 @@ public class ConfigModule {
 
     @Provides
     Gestalt configurationProvider() {
-        String configPath = System.getProperty("nukagit.config_path", "config/application.yaml");
+        Path configPath = Path.of(System.getProperty("nukagit.config_path", "config/application.yaml"));
         Gestalt gestalt;
         try {
-            gestalt =
+            var gestaltBuilder =
                     new GestaltBuilder()
                             .addSource(
                                     ClassPathConfigSourceBuilder.builder()
-                                            .setResource("/default.properties").build()) // Load the default property files from resources.
-                            .addSource(FileConfigSourceBuilder.builder().setPath(Path.of(configPath)).build())
-                            .addSource(EnvironmentConfigSourceBuilder.builder().setPrefix("NUKAGIT_").setRemovePrefix(true).build())
-                            .build();
+                                            .setResource("/default.properties").build()); // Load the default property files from resources.
+
+            // check if the config file exists
+            if (configPath.toFile().exists()) {
+                gestaltBuilder.addSource(FileConfigSourceBuilder.builder().setPath(configPath).build());
+            }
+            gestaltBuilder.addSource(EnvironmentConfigSourceBuilder.builder().setPrefix("NUKAGIT_").setRemovePrefix(true).build());
+            gestalt = gestaltBuilder.build();
             gestalt.loadConfigs();
         } catch (GestaltException e) {
             throw new RuntimeException("Failed to load configuration!", e);

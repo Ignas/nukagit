@@ -6,9 +6,10 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'com.ryandens.javaagent-application' version "0.4.2"
+    id 'com.bmuschko.docker-java-application' version '9.4.0'
 }
 
-String rawVersion = project.hasProperty('version') ? project.version : '0.1.0-SNAPSHOT'
+String rawVersion = project.version != 'unspecified' ? project.version : '0.1.0-SNAPSHOT'
 def versionWithoutPrefix = rawVersion.replaceAll('^v', '')
 group = 'lt.pow.nukagit'
 version = versionWithoutPrefix
@@ -152,4 +153,18 @@ publishing {
             }
         }
     }
+}
+
+docker {
+    javaApplication {
+        baseImage = 'gcr.io/distroless/java17-debian12:latest'
+        maintainer = 'Ignas Mikalajunas "ignas@pow.lt"'
+        ports = [2222, 50051]
+        images = ["nukagit:${versionWithoutPrefix}", 'nukagit:latest']
+        args = ['serve']
+    }
+}
+
+dockerCreateDockerfile {
+    environmentVariable 'JAVA_OPTS', '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap'
 }
