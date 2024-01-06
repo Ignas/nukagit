@@ -8,12 +8,14 @@ plugins {
     id 'com.ryandens.javaagent-application' version "0.4.2"
 }
 
-def rawVersion = project.hasProperty('version') ? project.version : '0.1.0-SNAPSHOT'
+String rawVersion = project.hasProperty('version') ? project.version : '0.1.0-SNAPSHOT'
 def versionWithoutPrefix = rawVersion.replaceAll('^v', '')
-
 group = 'lt.pow.nukagit'
 version = versionWithoutPrefix
-mainClassName = 'lt.pow.nukagit.Main'
+
+application {
+    mainClass = 'lt.pow.nukagit.Main'
+}
 
 repositories {
     mavenCentral()

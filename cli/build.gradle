@@ -7,7 +7,10 @@ plugins {
 
 group = 'lt.pow.nukagit'
 version = '0.1.0-SNAPSHOT'
-mainClassName = 'lt.pow.nukagit.cli.Main'
+
+application {
+    mainClass = 'lt.pow.nukagit.cli.Main'
+}
 
 repositories {
     mavenCentral()
