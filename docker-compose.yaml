@@ -14,7 +14,6 @@ services:
       MYSQL_DATABASE: nukagit
       MYSQL_USER: nukagit
       MYSQL_PASSWORD: password
-      MYSQL_LOWER_CASE_TABLE_NAMES: 1
     ports:
       - 3306:3306
     volumes:
