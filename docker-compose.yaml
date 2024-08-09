@@ -1,5 +1,9 @@
 version: "3.5"
 
+volumes:
+    mysql:
+    minio:
+
 services:
   mysql:
     image: centos/mysql-80-centos8:latest
@@ -14,7 +18,7 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ./data/mysql/:/var/lib/mysql/data:rw
+      - mysql:/var/lib/mysql/data:rw
 
   minio:
     image: quay.io/minio/minio:latest
@@ -27,7 +31,7 @@ services:
       - 9000:9000
       - 9001:9001
     volumes:
-      - ./data/minio:/data:rw
+      - minio:/data:rw
     command: server /data --console-address ":9001"
   mc:
     image: minio/mc:latest
