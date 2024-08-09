@@ -11,6 +11,7 @@ import lt.pow.nukagit.db.dao.PublicKeysDao;
 import lt.pow.nukagit.db.dao.UsersDao;
 import lt.pow.nukagit.db.entities.Pack;
 import lt.pow.nukagit.db.entities.PublicKeyData;
+import lt.pow.nukagit.db.entities.Repository;
 import lt.pow.nukagit.db.entities.UserPublicKey;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
@@ -48,6 +49,7 @@ public class DatabaseModule {
     jdbi.registerColumnMapper(new BigIntegerColumnMapper());
     JdbiImmutables jdbiImmutables = jdbi.getConfig(JdbiImmutables.class);
     jdbiImmutables.registerImmutable(Pack.class);
+    jdbiImmutables.registerImmutable(Repository.class);
     jdbiImmutables.registerImmutable(UserPublicKey.class);
     jdbiImmutables.registerModifiable(UserPublicKey.class);
     jdbiImmutables.registerImmutable(PublicKeyData.class);

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,6 +57,8 @@ public class DfsRepositoryResolver {
     }
 
     public synchronized List<String> listRepositories() {
-        return List.copyOf(repositoryCache.keySet());
+        ArrayList<String> repositories = new ArrayList<>(repositoryCache.keySet());
+        dfsDao.listRepositories().forEach(repository -> repositories.add(repository.name()));
+        return repositories;
     }
 }

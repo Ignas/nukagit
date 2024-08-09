@@ -10,6 +10,7 @@ import picocli.CommandLine;
         subcommands = {
                 AddUser.class,
                 CreateRepository.class,
+                ListRepositories.class,
         })
 public class Main implements Runnable {
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message")

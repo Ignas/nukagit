@@ -46,6 +46,21 @@ class NukagitDfsDaoTest extends DatabaseTestBase {
         repoId1 != repoId2
     }
 
+    def "we can list non archived repositories"() {
+        given:
+        def repoName1 = random.nextObject(String.class)
+        def repoName2 = random.nextObject(String.class)
+        dao.upsertRepository(repoName1)
+        dao.upsertRepository(repoName2)
+        def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))
+        dao.archiveRepository(repoId)
+        when:
+        def repositoryNames = dao.listRepositories() .stream().map(it -> it.name()).toList()
+        then:
+        repositoryNames.size() == 2
+        repositoryNames == [repoName1, repoName2].sort { it }
+    }
+
     def "we can commit an empty set of packs"() {
         given:
         def repoId = dao.upsertRepositoryAndGetId(random.nextObject(String.class))
