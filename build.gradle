@@ -113,6 +113,7 @@ spotbugs {
 
 run {
     systemProperty "otel.metrics.exporter", "prometheus"
+    systemProperty "otel.logs.exporter", "none"
     systemProperty "otel.exporter.prometheus.port", "9091"
     systemProperty "otel.traces.exporter", "otlp"
     systemProperty "otel.exporter.otlp.traces.endpoint", "http://localhost:4317"
