@@ -114,7 +114,8 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
         try {
             dfsDao.commitPack(repositoryId, newPacks, removePacks);
         } catch (NukagitDfsPackConflictException e) {
-            LOGGER.warn("commitPackImpl: encountered conflict when committing packs", e);
+            // Conflicts in git happen
+            LOGGER.info("commitPackImpl: encountered conflict when committing packs", e);
             throw new IOException(e);
         }
         clearCache();
@@ -323,7 +324,7 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
                         ((NukagitDfsRepositoryDescription) desc.getRepositoryDescription()).getRepositoryId(),
                         blockNumber,
                         desc.getFileName(ext));
-                int bytesToRead = Math.min(blockSize - positionInBlock, dst.remaining());
+                int bytesToRead = Math.min(Math.min(blockSize - positionInBlock, dst.remaining()), blockData.length);
 
                 dst.put(blockData, positionInBlock, bytesToRead);
                 totalBytesRead += bytesToRead;

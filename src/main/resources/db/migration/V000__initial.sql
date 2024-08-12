@@ -45,4 +45,4 @@ ALTER TABLE packs
         GENERATED ALWAYS AS (IF(ext = 'ref', 1, NULL)) VIRTUAL;
 
 ALTER TABLE packs
-    ADD CONSTRAINT UNIQUE (max_update_index, ref_pack);
+    ADD CONSTRAINT UNIQUE (push_id, max_update_index, ref_pack);

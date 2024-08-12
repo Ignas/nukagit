@@ -20,17 +20,27 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.eclipse.jgit.api.CloneCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.RefSpec
+import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.eclipse.jgit.transport.SshSessionFactory
+import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
+import org.jeasy.random.EasyRandom
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.spock.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import spock.lang.FailsWith
 import spock.lang.Specification
 import spock.lang.TempDir
+import org.spockframework.runtime.ConditionNotSatisfiedError
 
 import java.nio.charset.StandardCharsets
 import java.security.KeyPair
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 @Testcontainers
@@ -48,6 +58,7 @@ class NukagitIntegrationTest extends Specification {
 
     static final String USERNAME = "testuser"
     var component = DaggerTestComponent.create()
+    var random = new EasyRandom()
     SshClient sshClient
     KeyPair keyPair
 
@@ -139,37 +150,126 @@ class NukagitIntegrationTest extends Specification {
         component.sshServer().stop()
     }
 
-    def cloneRepository(String path) {
+    def createRepository(String path) {
         repositoriesGrpcClient.createRepository(Repositories.CreateRepositoryRequest.newBuilder().setRepositoryName(path).build())
-        var clonePath = new File(testDir, path.replace("/", "-"))
+        var randomPath = random.nextObject(String)
+        Git git = Git.init()
+                .setDirectory(new File(testDir, randomPath))
+                .setInitialBranch("main")
+                .call()
+        git.remoteAdd()
+                .setName("origin")
+                .setUri(new URIish("ssh://git@localhost:${sshPort}/${path}"))
+                .call()
+        commitRandomFile(git)
+        git.checkout().setName("main").call()
+        git.push().setPushAll().call()
+        // This does not set HEAD, might be a bug in the server
+        return git
+    }
+
+    def cloneRepository(String path) {
+        var randomPath = UUID.randomUUID().toString()
+        var clonePath = new File(testDir, randomPath)
         CloneCommand cloneCommand = Git.cloneRepository()
         cloneCommand.setURI("ssh://git@localhost:${sshPort}/${path}")
         cloneCommand.setDirectory(clonePath)
+        // For now set it to main explicitly, because HEAD does not exist in the remote repository
+        cloneCommand.setBranch("main")
         return cloneCommand.call()
+    }
+
+    def commitRandomFile(Git git) {
+        var newFile = new File(git.repository.workTree, "test.txt")
+        newFile.write(random.nextObject(String.class))
+        git.add().addFilepattern(".").call()
+        git.commit().setAuthor("test", "test@example.com").setMessage("Test Change").call()
     }
 
     def "test clone empty in-memory repo add file and push it back"() {
         given:
+        createRepository("memory/repo")
         var git = cloneRepository("memory/repo")
         when:
-        var newFile = new File(git.repository.directory, "test.txt")
-        newFile.write("Test Content")
+        commitRandomFile(git)
         then:
-        git.add().addFilepattern(".").call()
-        git.commit().setAuthor("test", "test@example.com").setMessage("Test Change").call()
         git.push().call()
     }
 
     def "test clone minio backed repo add file and push it back"() {
         given:
+        createRepository("minio/repo")
         var git = cloneRepository("minio/repo")
         when:
-        var newFile = new File(git.repository.directory, "test.txt")
-        newFile.write("Test Content")
+        commitRandomFile(git)
         then:
-        git.add().addFilepattern(".").call()
-        git.commit().setAuthor("test", "test@example.com").setMessage("Test Change").call()
         git.push().call()
+    }
+
+    def "test pushing conflicting changes to main should fail"() {
+        given:
+        var repoName = "minio/repo"
+        createRepository(repoName)
+        var git1 = cloneRepository(repoName)
+        var git2 = cloneRepository(repoName)
+        commitRandomFile(git1)
+        commitRandomFile(git2)
+        when:
+        var pushResult1 = git1.push().call().asList()
+        var pushResult2 = git2.push().call().asList()
+        then:
+        pushResult1.size() == 1
+        pushResult2.size() == 1
+        pushResult1.get(0).getRemoteUpdate("refs/heads/main").getStatus() == RemoteRefUpdate.Status.OK
+        pushResult2.get(0).getRemoteUpdate("refs/heads/main").getStatus() == RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD
+    }
+
+    @FailsWith(ConditionNotSatisfiedError)
+    def "test concurrent pushes to different branches should conflict and fail"() {
+        // For now this is a conflict causing situation, but I intend to implement
+        // a mysql native reftable that will handle individual branch updates
+        given:
+        createRepository("minio/repo")
+
+        var nThreads = 10
+        ArrayList<Git> repositories = []
+        nThreads.times {
+            var git = cloneRepository("minio/repo")
+            commitRandomFile(git)
+            repositories.push(git)
+        }
+        when:
+        // concurrently run push
+        ExecutorService executorService = Executors.newFixedThreadPool(nThreads)
+        List<Future<RemoteRefUpdate.Status>> futures = []
+        repositories.forEach {git ->
+            def closure = {
+                var branchName = UUID.randomUUID().toString()
+                var result = git.push()
+                        .setRemote("origin")
+                        .setRefSpecs(new RefSpec("main:${branchName}"))
+                        .call()
+                        .first()
+                        .getRemoteUpdates()
+                        .first()
+                        .getStatus()
+                return result
+            }
+            Future<RemoteRefUpdate.Status> future = executorService.submit(closure as Callable<RemoteRefUpdate.Status>)
+            futures.add(future)
+        }
+        executorService.shutdown()
+        executorService.awaitTermination(1, TimeUnit.MINUTES)
+        then:
+
+        futures.each { future ->
+            // This statement fails because push gets REJECTED_OTHER_REASON status
+            assert future.get() == RemoteRefUpdate.Status.OK
+        }
+
+        var git = cloneRepository("minio/repo")
+        // This statement fails because not all branches have been pushed successfully
+        git.lsRemote().call().size() == nThreads + 1
     }
 
     def sshRun(String command) {

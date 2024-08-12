@@ -5,10 +5,7 @@ import lt.pow.nukagit.db.entities.Repository;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
-import org.jdbi.v3.sqlobject.statement.BatchChunkSize;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.*;
 import org.jdbi.v3.sqlobject.transaction.Transaction;
 
 import java.util.List;
@@ -65,8 +62,13 @@ public interface NukagitDfsDao {
   @SqlUpdate("UPDATE repositories SET push_id = :pushId WHERE id = :repositoryId")
   void setPush(@Bind("repositoryId") UUID repositoryId, @Bind("pushId") UUID pushId);
 
+  @SqlCall("SELECT * FROM repositories WHERE id = :repositoryId FOR UPDATE")
+  void lockRepository(@Bind("repositoryId") UUID repositoryId);
+
   @Transaction
   default void commitPack(UUID repositoryId, List<Pack> desc, List<Pack> replace) throws NukagitDfsPackConflictException {
+    // For now use select for update to order the commits
+    lockRepository(repositoryId);
     // Get last push
     UUID lastPush = getLastPush(repositoryId);
     // Create a new push
@@ -75,11 +77,11 @@ public interface NukagitDfsDao {
     try {
       // Insert new packs
       insertPacks(pushId, desc);
+      // Copy over previous commit
+      copyPacks(lastPush, pushId);
     } catch (UnableToExecuteStatementException e) {
       throw new NukagitDfsPackConflictException(e);
     }
-    // Copy over previous commit
-    copyPacks(lastPush, pushId);
     // Remove replaced packs
     deletePacks(pushId, replace);
     // Set the new push as the last push
