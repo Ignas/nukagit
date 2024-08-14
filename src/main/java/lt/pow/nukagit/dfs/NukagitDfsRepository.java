@@ -128,6 +128,14 @@ public class NukagitDfsRepository extends DfsRepository {
             if (dfsRef.isSymbolic()) {
                 DfsRef target = allRefMap.get(dfsRef.target());
                 return new SymbolicRef(dfsRef.name(), toJgitRef(allRefMap, target));
+            } else if (dfsRef.isPeeled()) {
+                if (dfsRef.peeledRef() == null) {
+                    return new ObjectIdRef.PeeledNonTag(
+                            Ref.Storage.LOOSE, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()));
+
+                }
+                return new ObjectIdRef.PeeledTag(
+                        Ref.Storage.LOOSE, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()), ObjectId.fromString(dfsRef.peeledRef()));
             }
             return new ObjectIdRef.Unpeeled(
                     Ref.Storage.LOOSE, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()));
