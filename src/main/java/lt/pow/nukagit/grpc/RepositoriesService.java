@@ -5,7 +5,8 @@ import io.grpc.stub.StreamObserver;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.dao.NukagitDfsObjDao;
+import lt.pow.nukagit.db.dao.NukagitDfsRepositoryDao;
 import lt.pow.nukagit.dfs.DfsRepositoryResolver;
 import lt.pow.nukagit.proto.Repositories;
 import lt.pow.nukagit.proto.RepositoriesServiceGrpc;
@@ -15,12 +16,13 @@ import lt.pow.nukagit.proto.Types;
 public class RepositoriesService extends RepositoriesServiceGrpc.RepositoriesServiceImplBase {
 
     private final DfsRepositoryResolver repositoryResolver;
-    private final NukagitDfsDao nukagitDfsDao;
+
+    private final NukagitDfsRepositoryDao nukagitDfsRepositoryDao;
 
     @Inject
-    public RepositoriesService(DfsRepositoryResolver repositoryResolver, NukagitDfsDao nukagitDfsDao) {
+    public RepositoriesService(DfsRepositoryResolver repositoryResolver, NukagitDfsRepositoryDao nukagitDfsRepositoryDao) {
         this.repositoryResolver = repositoryResolver;
-        this.nukagitDfsDao = nukagitDfsDao;
+        this.nukagitDfsRepositoryDao = nukagitDfsRepositoryDao;
     }
 
     private Repositories.ListRepositoriesResponse listRepositories(Repositories.ListRepositoriesRequest request) {
@@ -46,7 +48,7 @@ public class RepositoriesService extends RepositoriesServiceGrpc.RepositoriesSer
         if (!repositoryName.startsWith("/")) {
             repositoryName = "/" + repositoryName;
         }
-        nukagitDfsDao.upsertRepository(repositoryName);
+        nukagitDfsRepositoryDao.upsertRepository(repositoryName);
         return Repositories.CreateRepositoryResponse.newBuilder().build();
     }
 

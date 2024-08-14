@@ -3,7 +3,7 @@ package lt.pow.nukagit.dfs;
 import com.google.common.annotations.VisibleForTesting;
 import io.opentelemetry.instrumentation.annotations.SpanAttribute;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
-import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.dao.NukagitDfsObjDao;
 import lt.pow.nukagit.db.dao.NukagitDfsPackConflictException;
 import lt.pow.nukagit.db.entities.ImmutablePack;
 import lt.pow.nukagit.db.entities.Pack;
@@ -24,14 +24,14 @@ public class NukagitDfsObjDatabase extends DfsObjDatabase {
     private final Logger LOGGER = LoggerFactory.getLogger(NukagitDfsObjDatabase.class);
 
     private final NukagitBlockRepository blockRepository;
-    private final NukagitDfsDao dfsDao;
+    private final NukagitDfsObjDao dfsDao;
     private final int blockSize;
 
     private final UUID repositoryId;
 
     public NukagitDfsObjDatabase(
             NukagitDfsRepository nukagitDfsRepository,
-            NukagitDfsDao dfsDao,
+            NukagitDfsObjDao dfsDao,
             NukagitBlockRepository blockRepository, DfsReaderOptions readerOptions,
             int blockSize) {
         super(nukagitDfsRepository, readerOptions);

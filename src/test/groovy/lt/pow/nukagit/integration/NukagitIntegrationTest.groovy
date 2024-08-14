@@ -193,7 +193,7 @@ class NukagitIntegrationTest extends Specification {
         when:
         commitRandomFile(git)
         then:
-        git.push().call()
+        git.push().call().first().getRemoteUpdates().first().getStatus() == RemoteRefUpdate.Status.OK
     }
 
     def "test clone minio backed repo add file and push it back"() {
@@ -203,7 +203,7 @@ class NukagitIntegrationTest extends Specification {
         when:
         commitRandomFile(git)
         then:
-        git.push().call()
+        git.push().call().first().getRemoteUpdates().first().getStatus() == RemoteRefUpdate.Status.OK
     }
 
     def "test pushing conflicting changes to main should fail"() {
@@ -224,10 +224,7 @@ class NukagitIntegrationTest extends Specification {
         pushResult2.get(0).getRemoteUpdate("refs/heads/main").getStatus() == RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD
     }
 
-    @FailsWith(ConditionNotSatisfiedError)
-    def "test concurrent pushes to different branches should conflict and fail"() {
-        // For now this is a conflict causing situation, but I intend to implement
-        // a mysql native reftable that will handle individual branch updates
+    def "test concurrent pushes to different branches should  not conflict"() {
         given:
         createRepository("minio/repo")
 
@@ -263,12 +260,10 @@ class NukagitIntegrationTest extends Specification {
         then:
 
         futures.each { future ->
-            // This statement fails because push gets REJECTED_OTHER_REASON status
             assert future.get() == RemoteRefUpdate.Status.OK
         }
 
         var git = cloneRepository("minio/repo")
-        // This statement fails because not all branches have been pushed successfully
         git.lsRemote().call().size() == nThreads + 1
     }
 

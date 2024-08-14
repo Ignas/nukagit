@@ -1,7 +1,9 @@
 package lt.pow.nukagit.dfs;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
-import lt.pow.nukagit.db.dao.NukagitDfsDao;
+import lt.pow.nukagit.db.dao.NukagitDfsObjDao;
+import lt.pow.nukagit.db.dao.NukagitDfsRefDao;
+import lt.pow.nukagit.db.dao.NukagitDfsRepositoryDao;
 import lt.pow.nukagit.minio.NukagitBlockRepository;
 import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
@@ -22,12 +24,18 @@ public class DfsRepositoryResolver {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DfsRepositoryResolver.class);
     private final ConcurrentHashMap<String, Repository> repositoryCache;
-    private final NukagitDfsDao dfsDao;
+    private final NukagitDfsObjDao dfsObjDao;
+
+    private final NukagitDfsRepositoryDao dfsRepositoryDao;
+
+    private final NukagitDfsRefDao dfsRefDao;
     private final NukagitBlockRepository blockRepository;
 
     @Inject
-    public DfsRepositoryResolver(NukagitDfsDao dfsDao, NukagitBlockRepository blockRepository) {
-        this.dfsDao = dfsDao;
+    public DfsRepositoryResolver(NukagitDfsObjDao dfsObjDao, NukagitDfsRepositoryDao dfsRepositoryDao, NukagitDfsRefDao dfsRefDao, NukagitBlockRepository blockRepository) {
+        this.dfsObjDao = dfsObjDao;
+        this.dfsRepositoryDao = dfsRepositoryDao;
+        this.dfsRefDao = dfsRefDao;
         this.blockRepository = blockRepository;
         repositoryCache = new ConcurrentHashMap<>();
     }
@@ -39,11 +47,11 @@ public class DfsRepositoryResolver {
         String repositoryName = args[1];
 
         if (!repositoryName.startsWith("/memory/")) {
-            var id = dfsDao.getRepositoryIdByName(repositoryName);
+            var id = dfsRepositoryDao.getRepositoryIdByName(repositoryName);
             if (id == null) {
                 throw new IOException(String.format("Repository with the name %s does not exist!", repositoryName));
             }
-            return new NukagitDfsRepository.Builder(dfsDao, blockRepository)
+            return new NukagitDfsRepository.Builder(dfsObjDao, dfsRefDao, blockRepository)
                     .setRepositoryDescription(new NukagitDfsRepositoryDescription(id, repositoryName))
                     // .withPath(new Path("testRepositories", name))
                     // .withBlockSize(64)
@@ -58,7 +66,7 @@ public class DfsRepositoryResolver {
 
     public synchronized List<String> listRepositories() {
         ArrayList<String> repositories = new ArrayList<>(repositoryCache.keySet());
-        dfsDao.listRepositories().forEach(repository -> repositories.add(repository.name()));
+        dfsRepositoryDao.listRepositories().forEach(repository -> repositories.add(repository.name()));
         return repositories;
     }
 }

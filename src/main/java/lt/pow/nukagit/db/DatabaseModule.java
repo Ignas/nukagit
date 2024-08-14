@@ -6,17 +6,15 @@ import dagger.Module;
 import dagger.Provides;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import lt.pow.nukagit.db.dao.NukagitDfsDao;
-import lt.pow.nukagit.db.dao.PublicKeysDao;
-import lt.pow.nukagit.db.dao.UsersDao;
-import lt.pow.nukagit.db.entities.Pack;
-import lt.pow.nukagit.db.entities.PublicKeyData;
-import lt.pow.nukagit.db.entities.Repository;
-import lt.pow.nukagit.db.entities.UserPublicKey;
+
+import lt.pow.nukagit.db.dao.*;
+import lt.pow.nukagit.db.entities.*;
 import org.github.gestalt.config.Gestalt;
 import org.github.gestalt.config.exceptions.GestaltException;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.mapper.immutables.JdbiImmutables;
+import org.jdbi.v3.core.mapper.reflect.ReflectionMappers;
+import org.jdbi.v3.core.mapper.reflect.SnakeCaseColumnNameMatcher;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 @Module
@@ -49,6 +47,7 @@ public class DatabaseModule {
     jdbi.registerColumnMapper(new BigIntegerColumnMapper());
     JdbiImmutables jdbiImmutables = jdbi.getConfig(JdbiImmutables.class);
     jdbiImmutables.registerImmutable(Pack.class);
+    jdbiImmutables.registerImmutable(DfsRef.class);
     jdbiImmutables.registerImmutable(Repository.class);
     jdbiImmutables.registerImmutable(UserPublicKey.class);
     jdbiImmutables.registerModifiable(UserPublicKey.class);
@@ -58,8 +57,20 @@ public class DatabaseModule {
 
   @Provides
   @Singleton
-  NukagitDfsDao dfsDao(Jdbi jdbi) {
-    return jdbi.onDemand(NukagitDfsDao.class);
+  NukagitDfsRepositoryDao repositoryDao(Jdbi jdbi) {
+    return jdbi.onDemand(NukagitDfsRepositoryDao.class);
+  }
+
+  @Provides
+  @Singleton
+  NukagitDfsObjDao dfsObjDao(Jdbi jdbi) {
+    return jdbi.onDemand(NukagitDfsObjDao.class);
+  }
+
+  @Provides
+  @Singleton
+  NukagitDfsRefDao dfsRefDao(Jdbi jdbi) {
+    return jdbi.onDemand(NukagitDfsRefDao.class);
   }
 
   @Provides
