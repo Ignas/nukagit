@@ -5,6 +5,8 @@ import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.apache.sshd.common.util.threads.CloseableExecutorService;
 import org.apache.sshd.git.pack.GitPackCommand;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepository;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -54,6 +56,23 @@ public class GitDfsPackCommand extends GitPackCommand {
                 uploadPack(db);
             } else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
                 receivePack(db);
+                // if HEAD ref has not been set up yet, set it up
+                if (db.getRefDatabase().exactRef(Constants.HEAD) == null) {
+                    List<String> preferredRefs = List.of("main", "master");
+                    boolean headSet = false;
+                    for (String ref : preferredRefs) {
+                        if (db.getRefDatabase().exactRef(Constants.R_HEADS + ref) != null) {
+                            RefUpdate u = db.updateRef(Constants.HEAD);
+                            u.link(Constants.R_HEADS + ref);
+                            headSet = true;
+                            break;
+                        }
+                    }
+                    // If no preferred refs exist, link HEAD to the only ref if there is exactly one
+                    if (!headSet && db.getRefDatabase().getRefs().size() == 1) {
+                        RefUpdate u = db.updateRef(Constants.HEAD);
+                        u.link(db.getRefDatabase().getRefs().get(0).getName());
+                    }                }
             } else {
                 throw new IllegalArgumentException("Unknown git command: " + command);
             }

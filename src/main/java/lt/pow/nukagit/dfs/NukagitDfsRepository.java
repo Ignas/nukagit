@@ -131,14 +131,14 @@ public class NukagitDfsRepository extends DfsRepository {
             } else if (dfsRef.isPeeled()) {
                 if (dfsRef.peeledRef() == null) {
                     return new ObjectIdRef.PeeledNonTag(
-                            Ref.Storage.LOOSE, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()));
+                            Ref.Storage.PACKED, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()));
 
                 }
                 return new ObjectIdRef.PeeledTag(
-                        Ref.Storage.LOOSE, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()), ObjectId.fromString(dfsRef.peeledRef()));
+                        Ref.Storage.PACKED, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()), ObjectId.fromString(dfsRef.peeledRef()));
             }
             return new ObjectIdRef.Unpeeled(
-                    Ref.Storage.LOOSE, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()));
+                    Ref.Storage.PACKED, dfsRef.name(), ObjectId.fromString(dfsRef.objectID()));
         }
 
         private DfsRef toDfsRef(Ref ref) {
@@ -147,6 +147,7 @@ public class NukagitDfsRepository extends DfsRepository {
                         .name(ref.getName())
                         .isSymbolic(true)
                         .target(ref.getTarget().getName())
+                        .isPeeled(false)
                         .build();
             }
             return ImmutableDfsRef.builder()
@@ -179,6 +180,7 @@ public class NukagitDfsRepository extends DfsRepository {
 
             var idRefListBuilder = new RefList.Builder<>();
             idRefListBuilder.addAll(idRefList.toArray(new Ref[0]), 0, idRefList.size());
+            idRefListBuilder.addAll(symRefList.toArray(new Ref[0]), 0, symRefList.size());
             idRefListBuilder.sort();
             RefList<Ref> ids = idRefListBuilder.toRefList();
 

@@ -162,9 +162,7 @@ class NukagitIntegrationTest extends Specification {
                 .setUri(new URIish("ssh://git@localhost:${sshPort}/${path}"))
                 .call()
         commitRandomFile(git)
-        git.checkout().setName("main").call()
         git.push().setPushAll().call()
-        // This does not set HEAD, might be a bug in the server
         return git
     }
 
@@ -174,8 +172,6 @@ class NukagitIntegrationTest extends Specification {
         CloneCommand cloneCommand = Git.cloneRepository()
         cloneCommand.setURI("ssh://git@localhost:${sshPort}/${path}")
         cloneCommand.setDirectory(clonePath)
-        // For now set it to main explicitly, because HEAD does not exist in the remote repository
-        cloneCommand.setBranch("main")
         return cloneCommand.call()
     }
 
@@ -204,6 +200,8 @@ class NukagitIntegrationTest extends Specification {
         commitRandomFile(git)
         then:
         git.push().call().first().getRemoteUpdates().first().getStatus() == RemoteRefUpdate.Status.OK
+        // the remote should also get main branch set up as it's HEAD
+        git.lsRemote().call().find { it.getName() == "HEAD" }.target.name == "refs/heads/main"
     }
 
     def "test pushing conflicting changes to main should fail"() {
@@ -264,7 +262,8 @@ class NukagitIntegrationTest extends Specification {
         }
 
         var git = cloneRepository("minio/repo")
-        git.lsRemote().call().size() == nThreads + 1
+        // main and HEAD are two extra refs
+        git.lsRemote().call().size() == nThreads + 2
     }
 
     def sshRun(String command) {
