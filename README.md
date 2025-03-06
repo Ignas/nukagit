@@ -26,7 +26,7 @@ docker-compose up
 # it's directory on a Mac with colima
 
 ./gradlew :run --args="migrate"
-./gradlew :serve --args="serve"
+./gradlew :run --args="serve"
 ```
 
 ## Testing
